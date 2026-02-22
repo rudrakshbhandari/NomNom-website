@@ -727,6 +727,15 @@ img {
   color: var(--text-muted);
 }
 
+.footer-bottom a {
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.footer-bottom a:hover {
+  color: var(--primary);
+}
+
 /* ============================================
    Mobile menu
    ============================================ */
