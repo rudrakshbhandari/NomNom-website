@@ -14,6 +14,7 @@
     <meta name="author" content="NomNom" />
     <title>NomNom – UCSD Food Delivery</title>
     <link rel="canonical" href="https://nomnom.cc" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website" />
@@ -23,6 +24,18 @@
       property="og:description"
       content="Triton2Go food, delivered to your dorm. Flat $2.5 fee. Real-time tracking. @ucsd.edu only."
     />
+    <meta property="og:image" content="https://nomnom.cc/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NomNom – UCSD Food Delivery" />
+    <meta
+      name="twitter:description"
+      content="Triton2Go food, delivered to your dorm. Flat $2.5 fee. Real-time tracking. @ucsd.edu only."
+    />
+    <meta name="twitter:image" content="https://nomnom.cc/og-image.png" />
 
     <!-- Fonts: Plus Jakarta Sans - distinctive, modern -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -246,7 +259,7 @@
     <section class="section section-audiences">
       <div class="container">
         <div class="audience-cards">
-          <div class="audience-card audience-students">
+          <div id="for-students" class="audience-card audience-students">
             <div class="audience-content">
               <span class="audience-label">For students</span>
               <h2>Order food, get it delivered</h2>
@@ -261,7 +274,7 @@
               <div class="illustration-placeholder illustration-order"></div>
             </div>
           </div>
-          <div class="audience-card audience-riders">
+          <div id="for-riders" class="audience-card audience-riders">
             <div class="audience-content">
               <span class="audience-label">For riders</span>
               <h2>Earn $2 base + tips per delivery</h2>
