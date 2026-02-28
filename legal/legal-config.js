@@ -6,8 +6,8 @@ window.NOMNOM_LEGAL_CONFIG = {
   company: {
     legalName: "Campus Ventures LLC",
     jurisdiction: "California limited liability company",
-    supportEmail: "hello@nomnom.cc",
-    supportUrl: "mailto:hello@nomnom.cc",
+    supportEmail: "hello@campusventures.us",
+    supportUrl: "mailto:hello@campusventures.us",
     supportPhone: "1-800-000-0000"
   },
   affiliationDisclaimer:
