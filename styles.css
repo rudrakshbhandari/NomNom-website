@@ -3,12 +3,12 @@
    ============================================ */
 :root {
   /* Brand colors */
-  --primary: #00629B;
-  --primary-light: #3b82f6;
-  --primary-hover: #00507d;
+  --primary: #b91c1c;
+  --primary-light: #f87171;
+  --primary-hover: #991b1b;
   
   /* Backgrounds */
-  --bg-light: #eff6ff;
+  --bg-light: #fef2f2;
   --bg-muted: #f9fafb;
   --bg-white: #ffffff;
   
@@ -30,8 +30,8 @@
   --section-padding: 5rem;
   --radius: 12px;
   --radius-lg: 16px;
-  --shadow: 0 4px 6px -1px rgba(0, 98, 155, 0.08), 0 2px 4px -2px rgba(0, 98, 155, 0.06);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 98, 155, 0.1), 0 8px 10px -6px rgba(0, 98, 155, 0.08);
+  --shadow: 0 4px 6px -1px rgba(185, 28, 28, 0.08), 0 2px 4px -2px rgba(185, 28, 28, 0.06);
+  --shadow-lg: 0 20px 25px -5px rgba(185, 28, 28, 0.1), 0 8px 10px -6px rgba(185, 28, 28, 0.08);
 }
 
 /* ============================================
@@ -99,6 +99,11 @@ img {
   font-size: 1.5rem;
   color: var(--primary);
   letter-spacing: -0.02em;
+}
+
+.logo img {
+  display: block;
+  height: 2.25rem;
 }
 
 .nav-menu {
@@ -223,8 +228,8 @@ img {
   inset: 0;
   opacity: 0.4;
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(0, 98, 155, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 30%, rgba(185, 28, 28, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(248, 113, 113, 0.05) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -547,7 +552,7 @@ img {
 
 .audience-students {
   background: linear-gradient(135deg, var(--bg-light) 0%, white 100%);
-  border-color: rgba(0, 98, 155, 0.15);
+  border-color: rgba(185, 28, 28, 0.15);
 }
 
 .audience-riders {
@@ -593,8 +598,8 @@ img {
 }
 
 .illustration-order {
-  background: linear-gradient(135deg, rgba(0, 98, 155, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
-  border: 2px dashed rgba(0, 98, 155, 0.25);
+  background: linear-gradient(135deg, rgba(185, 28, 28, 0.15) 0%, rgba(248, 113, 113, 0.08) 100%);
+  border: 2px dashed rgba(185, 28, 28, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;

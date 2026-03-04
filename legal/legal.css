@@ -82,6 +82,11 @@ button:focus-visible {
   letter-spacing: -0.02em;
 }
 
+.logo img {
+  display: block;
+  height: 2rem;
+}
+
 .nav {
   display: flex;
   gap: 0.8rem;
