@@ -208,3 +208,20 @@ ul {
     padding: 1rem;
   }
 }
+
+/* ============================================
+   Global red background & white text
+   ============================================ */
+body {
+  background: #ff0000;
+  color: #ffffff;
+}
+
+body * {
+  color: #ffffff !important;
+}
+
+a,
+a:visited {
+  color: #ffffff !important;
+}
