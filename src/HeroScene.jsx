@@ -416,9 +416,7 @@ function SceneContent({ phase, onCinematicComplete }) {
    ═══════════════════════════════════════════════ */
 
 const GLASS = {
-  background: 'rgba(255,255,255,0.05)',
-  backdropFilter: 'blur(28px)',
-  WebkitBackdropFilter: 'blur(28px)',
+  background: 'linear-gradient(165deg, rgba(35,35,40,0.95) 0%, rgba(15,15,20,0.97) 100%)',
   border: '1px solid rgba(255,255,255,0.10)',
 }
 
@@ -427,72 +425,92 @@ function NotificationCard({ onAccept, visible }) {
     <div style={{
       position: 'absolute', inset: 0, zIndex: 30,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(ellipse at 50% 45%, rgba(8,18,38,0.75) 0%, rgba(5,5,16,0.96) 70%)',
+      background: 'radial-gradient(ellipse at 50% 45%, rgba(8,8,14,0.80) 0%, rgba(2,2,6,0.97) 70%)',
       opacity: visible ? 1 : 0,
       transition: 'opacity 1.2s cubic-bezier(.4,0,.2,1)',
       pointerEvents: visible ? 'auto' : 'none',
     }}>
-      <div style={{
+      <div className="notif-card" style={{
         ...GLASS,
+        position: 'relative',
+        overflow: 'hidden',
         borderRadius: 28,
         padding: '40px 36px',
         width: 330,
-        boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 80px rgba(0,100,255,0.06)',
+        boxShadow:
+          '0 24px 64px rgba(0,0,0,0.7), ' +
+          '0 0 0 0.5px rgba(255,255,255,0.08) inset, ' +
+          '0 0 60px rgba(255,42,42,0.06)',
         textAlign: 'center',
         fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
         color: '#fff',
         transform: visible ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
         transition: 'transform 1s cubic-bezier(.4,0,.2,1), opacity 1s cubic-bezier(.4,0,.2,1)',
       }}>
-        <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 2 }}>
-          NomNom
-        </div>
+        {/* Diagonal shimmer reflection */}
+        <div className="card-shimmer" style={{
+          position: 'absolute', top: 0, left: '-75%',
+          width: '50%', height: '100%',
+          background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 55%, transparent 60%)',
+          pointerEvents: 'none',
+        }} />
+        {/* Top highlight edge */}
         <div style={{
-          fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)',
-          textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 28,
-        }}>
-          New Delivery Request
-        </div>
+          position: 'absolute', top: 0, left: '10%', right: '10%', height: 1,
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)',
+          pointerEvents: 'none',
+        }} />
 
-        <div style={{
-          background: 'rgba(255,255,255,0.035)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: 16, padding: '16px 20px',
-          textAlign: 'left', marginBottom: 28,
-        }}>
-          {[['Pickup', 'Sixth Dining Hall'], ['Dropoff', 'Geisel Library'], ['Tip', '$3']].map(([k, v], i, a) => (
-            <div key={k} style={{
-              display: 'flex', justifyContent: 'space-between',
-              marginBottom: i < a.length - 1 ? 12 : 0,
-            }}>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.40)', fontWeight: 500 }}>{k}</span>
-              <span style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>{v}</span>
-            </div>
-          ))}
-        </div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 2 }}>
+            NomNom
+          </div>
+          <div style={{
+            fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)',
+            textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 28,
+          }}>
+            New Delivery Request
+          </div>
 
-        <button onClick={onAccept} style={{
-          width: '100%', padding: '14px 0',
-          background: 'rgba(0,110,255,0.22)',
-          border: '1px solid rgba(0,140,255,0.28)',
-          borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 15,
-          fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer',
-          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-          transition: 'background 0.3s, box-shadow 0.3s',
-          boxShadow: '0 0 24px rgba(0,110,255,0.12)',
-          letterSpacing: '-0.01em',
-        }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(0,110,255,0.38)'
-            e.currentTarget.style.boxShadow = '0 0 36px rgba(0,110,255,0.25)'
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 16, padding: '16px 20px',
+            textAlign: 'left', marginBottom: 28,
+          }}>
+            {[['Pickup', 'Sixth Dining Hall'], ['Dropoff', 'Geisel Library'], ['Tip', '$3']].map(([k, v], i, a) => (
+              <div key={k} style={{
+                display: 'flex', justifyContent: 'space-between',
+                marginBottom: i < a.length - 1 ? 12 : 0,
+              }}>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.40)', fontWeight: 500 }}>{k}</span>
+                <span style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>{v}</span>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={onAccept} style={{
+            width: '100%', padding: '14px 0',
+            background: '#ff2a2a',
+            border: 'none',
+            borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 15,
+            fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer',
+            transition: 'transform 0.25s, box-shadow 0.3s',
+            boxShadow: '0 0 20px rgba(255,42,42,0.25)',
+            letterSpacing: '-0.01em',
           }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(0,110,255,0.22)'
-            e.currentTarget.style.boxShadow = '0 0 24px rgba(0,110,255,0.12)'
-          }}
-        >
-          Accept Delivery
-        </button>
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'scale(1.03)'
+              e.currentTarget.style.boxShadow = '0 0 36px rgba(255,42,42,0.4)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(255,42,42,0.25)'
+            }}
+          >
+            Accept Delivery
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -567,21 +585,23 @@ function ExploreButton({ visible }) {
     }}>
       <a href="#how-it-works" style={{
         display: 'inline-block', padding: '18px 52px',
-        ...GLASS, borderRadius: 18,
+        background: 'linear-gradient(165deg, rgba(35,35,40,0.92) 0%, rgba(15,15,20,0.95) 100%)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderRadius: 18,
         color: '#fff', fontWeight: 700, fontSize: 18,
         fontFamily: "'Plus Jakarta Sans', sans-serif",
         textDecoration: 'none', letterSpacing: '-0.01em',
-        boxShadow: '0 0 44px rgba(0,110,255,0.10), 0 8px 32px rgba(0,0,0,0.35)',
+        boxShadow: '0 0 44px rgba(255,42,42,0.08), 0 8px 32px rgba(0,0,0,0.5)',
         transition: 'background 0.3s, box-shadow 0.3s, transform 0.3s',
       }}
         onMouseEnter={e => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
-          e.currentTarget.style.boxShadow = '0 0 60px rgba(0,110,255,0.18), 0 8px 32px rgba(0,0,0,0.35)'
+          e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
+          e.currentTarget.style.boxShadow = '0 0 60px rgba(255,42,42,0.15), 0 8px 32px rgba(0,0,0,0.5)'
           e.currentTarget.style.transform = 'scale(1.03)'
         }}
         onMouseLeave={e => {
-          e.currentTarget.style.background = GLASS.background
-          e.currentTarget.style.boxShadow = '0 0 44px rgba(0,110,255,0.10), 0 8px 32px rgba(0,0,0,0.35)'
+          e.currentTarget.style.background = 'linear-gradient(165deg, rgba(35,35,40,0.92) 0%, rgba(15,15,20,0.95) 100%)'
+          e.currentTarget.style.boxShadow = '0 0 44px rgba(255,42,42,0.08), 0 8px 32px rgba(0,0,0,0.5)'
           e.currentTarget.style.transform = 'scale(1)'
         }}
       >
@@ -604,6 +624,13 @@ function InjectKeyframes() {
       }
       .hud-scan-line {
         animation: hudScan 2.4s ease-in-out infinite;
+      }
+      @keyframes cardShimmer {
+        0%   { left: -75%; }
+        100% { left: 150%; }
+      }
+      .card-shimmer {
+        animation: cardShimmer 5s ease-in-out infinite;
       }
     `}</style>
   )
