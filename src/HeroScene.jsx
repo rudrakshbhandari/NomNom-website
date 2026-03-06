@@ -131,12 +131,12 @@ function ProceduralGeisel() {
   })
 
   const tiers = useMemo(() => [
-    { r: 1.55, y: 2.85, h: 0.22 },
-    { r: 2.00, y: 3.30, h: 0.22 },
-    { r: 2.45, y: 3.75, h: 0.22 },
-    { r: 2.90, y: 4.20, h: 0.22 },
-    { r: 3.30, y: 4.65, h: 0.22 },
-    { r: 3.65, y: 5.10, h: 0.22 },
+    { r: 1.55, y: 1.94, h: 0.22 },
+    { r: 2.00, y: 2.39, h: 0.22 },
+    { r: 2.45, y: 2.84, h: 0.22 },
+    { r: 2.90, y: 3.29, h: 0.22 },
+    { r: 3.30, y: 3.74, h: 0.22 },
+    { r: 3.65, y: 4.19, h: 0.22 },
   ], [])
 
   const tierEdges = useMemo(
@@ -146,7 +146,7 @@ function ProceduralGeisel() {
 
   const outerColumns = useMemo(() => {
     const cols = []
-    const baseR = 1.80, topR = 1.55, baseY = 0.12, topY = 2.72
+    const baseR = 1.80, topR = 1.55, baseY = 0.12, topY = 1.81
     for (let i = 0; i < 12; i++) {
       const angle = (i * Math.PI) / 6
       cols.push({
@@ -159,7 +159,7 @@ function ProceduralGeisel() {
 
   const innerColumns = useMemo(() => {
     const cols = []
-    const baseR = 0.70, topR = 0.65, baseY = 0.12, topY = 2.72
+    const baseR = 0.70, topR = 0.65, baseY = 0.12, topY = 1.81
     for (let i = 0; i < 6; i++) {
       const angle = (i + 0.5) * Math.PI / 3
       cols.push({
@@ -226,12 +226,12 @@ function ProceduralGeisel() {
 
       {/* ── 12 outer support columns (wide perimeter, NOT converging) ── */}
       {outerColumns.map((c, i) => (
-        <ColumnStrut key={`oc-${i}`} from={c.from} to={c.to} radius={0.08} />
+        <ColumnStrut key={`oc-${i}`} from={c.from} to={c.to} radius={0.10} />
       ))}
 
       {/* ── 6 inner support columns (nearly vertical) ── */}
       {innerColumns.map((c, i) => (
-        <ColumnStrut key={`ic-${i}`} from={c.from} to={c.to} radius={0.05} />
+        <ColumnStrut key={`ic-${i}`} from={c.from} to={c.to} radius={0.07} />
       ))}
 
       {/* ── Hexagonal floor tiers — inverted pyramid ── */}
@@ -293,19 +293,19 @@ function ProceduralGeisel() {
       ))}
 
       {/* ── Roof cap ── */}
-      <mesh position={[0, 5.30, 0]}>
+      <mesh position={[0, 4.39, 0]}>
         <cylinderGeometry args={[3.45, 3.45, 0.06, 6]} />
         <meshStandardMaterial color="#1e2e3e" metalness={0.60} roughness={0.10} />
       </mesh>
       {roofEdges.map((e, i) => (
-        <mesh key={`roof-${i}`} position={[e.cx, 5.33, e.cz]} rotation={[0, e.rot, 0]}>
+        <mesh key={`roof-${i}`} position={[e.cx, 4.42, e.cz]} rotation={[0, e.rot, 0]}>
           <boxGeometry args={[0.026, 0.016, e.len]} />
           <meshStandardMaterial {...EDGE_MAT_PROPS} />
         </mesh>
       ))}
 
       {/* Inner glow */}
-      <pointLight position={[0, 3.8, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
+      <pointLight position={[0, 2.90, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
     </group>
   )
 }
