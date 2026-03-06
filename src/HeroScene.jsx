@@ -49,6 +49,47 @@ function GeiselGLB() {
    ═══════════════════════════════════════════════ */
 
 const EDGE_MAT_PROPS = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 1.8, toneMapped: false }
+const STRUT_MAT_PROPS = { color: '#1e2e3e', metalness: 0.95, roughness: 0.12 }
+
+function hexEdgeSegments(radius) {
+  const edges = []
+  for (let i = 0; i < 6; i++) {
+    const a1 = (i * Math.PI) / 3
+    const a2 = ((i + 1) * Math.PI) / 3
+    const x1 = radius * Math.sin(a1), z1 = radius * Math.cos(a1)
+    const x2 = radius * Math.sin(a2), z2 = radius * Math.cos(a2)
+    const dx = x2 - x1, dz = z2 - z1
+    edges.push({
+      cx: (x1 + x2) / 2,
+      cz: (z1 + z2) / 2,
+      len: Math.sqrt(dx * dx + dz * dz),
+      rot: Math.atan2(dx, dz),
+    })
+  }
+  return edges
+}
+
+function AngledStrut({ from, to, radius = 0.055 }) {
+  const { pos, quat, len } = useMemo(() => {
+    const f = new THREE.Vector3(...from)
+    const t = new THREE.Vector3(...to)
+    return {
+      pos: f.clone().add(t).multiplyScalar(0.5),
+      quat: new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        t.clone().sub(f).normalize()
+      ),
+      len: f.distanceTo(t),
+    }
+  }, [from, to])
+
+  return (
+    <mesh position={pos} quaternion={quat}>
+      <cylinderGeometry args={[radius * 0.6, radius, len, 6]} />
+      <meshStandardMaterial {...STRUT_MAT_PROPS} />
+    </mesh>
+  )
+}
 
 function ProceduralGeisel() {
   const g = useRef()
@@ -57,59 +98,128 @@ function ProceduralGeisel() {
     if (g.current) g.current.position.y = Math.sin(clock.elapsedTime * 0.3) * 0.04
   })
 
-  const floors = useMemo(() =>
-    [0, 1, 2, 3, 4, 5].map(i => {
-      const w = 1.8 + i * 0.55
-      return { w, d: w, y: 3 + i * 0.48 }
-    }), [])
-
-  const columns = useMemo(() => [
-    [-1.1, 1.5, -0.9], [1.1, 1.5, -0.9],
-    [-1.1, 1.5, 0.9], [1.1, 1.5, 0.9],
-    [0, 1.5, -1.2], [0, 1.5, 1.2],
+  const tiers = useMemo(() => [
+    { r: 1.35, y: 2.60, h: 0.20 },
+    { r: 1.80, y: 3.10, h: 0.20 },
+    { r: 2.25, y: 3.60, h: 0.20 },
+    { r: 2.70, y: 4.10, h: 0.20 },
+    { r: 3.10, y: 4.60, h: 0.20 },
+    { r: 3.45, y: 5.10, h: 0.20 },
   ], [])
+
+  const tierEdges = useMemo(
+    () => tiers.map(t => hexEdgeSegments(t.r)),
+    [tiers]
+  )
+
+  const struts = useMemo(() => {
+    const s = []
+    const baseR = 0.30
+    const topR = 1.40
+    const baseY = 0.10
+    const topY = 2.45
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3
+      const spread = 0.22
+      s.push(
+        { from: [baseR * Math.sin(angle - spread * 0.35), baseY, baseR * Math.cos(angle - spread * 0.35)],
+          to:   [topR  * Math.sin(angle - spread),        topY,  topR  * Math.cos(angle - spread)] },
+        { from: [baseR * Math.sin(angle + spread * 0.35), baseY, baseR * Math.cos(angle + spread * 0.35)],
+          to:   [topR  * Math.sin(angle + spread),        topY,  topR  * Math.cos(angle + spread)] },
+      )
+    }
+    return s
+  }, [])
+
+  const roofEdges = useMemo(() => hexEdgeSegments(3.20), [])
 
   return (
     <group ref={g}>
-      {columns.map((p, i) => (
-        <mesh key={i} position={p}>
-          <cylinderGeometry args={[0.05, 0.11, 3, 8]} />
-          <meshStandardMaterial color="#1e2e3e" metalness={0.95} roughness={0.12} />
+      {/* Central core shaft */}
+      <mesh position={[0, 1.30, 0]}>
+        <cylinderGeometry args={[0.18, 0.24, 2.6, 6]} />
+        <meshStandardMaterial color="#1a2a3a" metalness={0.92} roughness={0.12} />
+      </mesh>
+
+      {/* Base platform */}
+      <mesh position={[0, 0.04, 0]}>
+        <cylinderGeometry args={[0.55, 0.55, 0.08, 6]} />
+        <meshStandardMaterial {...STRUT_MAT_PROPS} />
+      </mesh>
+
+      {/* Angled V-shaped support struts (12 total) */}
+      {struts.map((s, i) => (
+        <AngledStrut key={`st-${i}`} from={s.from} to={s.to} />
+      ))}
+
+      {/* Transition collar where supports meet building */}
+      <mesh position={[0, 2.48, 0]}>
+        <cylinderGeometry args={[1.50, 1.20, 0.16, 6]} />
+        <meshPhysicalMaterial
+          color="#152535" metalness={0.30} roughness={0.10}
+          transparent opacity={0.55}
+        />
+      </mesh>
+      {hexEdgeSegments(1.50).map((e, i) => (
+        <mesh key={`collar-${i}`} position={[e.cx, 2.52, e.cz]} rotation={[0, e.rot, 0]}>
+          <boxGeometry args={[0.024, 0.016, e.len]} />
+          <meshStandardMaterial {...EDGE_MAT_PROPS} />
         </mesh>
       ))}
 
-      {floors.map((f, i) => (
-        <group key={`fl-${i}`}>
-          <mesh position={[0, f.y, 0]}>
-            <boxGeometry args={[f.w, 0.13, f.d]} />
+      {/* Hexagonal floor tiers — inverted pyramid */}
+      {tiers.map((t, ti) => (
+        <group key={`tier-${ti}`}>
+          <mesh position={[0, t.y, 0]}>
+            <cylinderGeometry args={[t.r, t.r, t.h, 6]} />
             <meshPhysicalMaterial
-              color="#152535"
-              metalness={0.25}
-              roughness={0.08}
-              transparent
-              opacity={0.72}
+              color="#152535" metalness={0.25} roughness={0.08}
+              transparent opacity={0.68}
             />
           </mesh>
-          {[
-            [0, f.y, f.d / 2, f.w, 0.02],
-            [0, f.y, -f.d / 2, f.w, 0.02],
-            [-f.w / 2, f.y, 0, 0.02, f.d],
-            [f.w / 2, f.y, 0, 0.02, f.d],
-          ].map(([x, y, z, bw, bd], j) => (
-            <mesh key={j} position={[x, y, z]}>
-              <boxGeometry args={[bw, 0.018, bd]} />
-              <meshStandardMaterial {...EDGE_MAT_PROPS} />
-            </mesh>
+
+          {tierEdges[ti].map((e, ei) => (
+            <group key={`e-${ei}`}>
+              <mesh position={[e.cx, t.y + t.h / 2, e.cz]} rotation={[0, e.rot, 0]}>
+                <boxGeometry args={[0.024, 0.016, e.len]} />
+                <meshStandardMaterial {...EDGE_MAT_PROPS} />
+              </mesh>
+              <mesh position={[e.cx, t.y - t.h / 2, e.cz]} rotation={[0, e.rot, 0]}>
+                <boxGeometry args={[0.024, 0.016, e.len]} />
+                <meshStandardMaterial {...EDGE_MAT_PROPS} />
+              </mesh>
+            </group>
           ))}
+
+          {/* Vertical corner edges at each hex vertex */}
+          {Array.from({ length: 6 }).map((_, vi) => {
+            const a = (vi * Math.PI) / 3
+            const vx = t.r * Math.sin(a)
+            const vz = t.r * Math.cos(a)
+            return (
+              <mesh key={`v-${vi}`} position={[vx, t.y, vz]}>
+                <boxGeometry args={[0.016, t.h, 0.016]} />
+                <meshStandardMaterial {...EDGE_MAT_PROPS} />
+              </mesh>
+            )
+          })}
         </group>
       ))}
 
-      <mesh position={[0, 5.88, 0]}>
-        <boxGeometry args={[5.1, 0.06, 5.1]} />
-        <meshStandardMaterial color="#1e2e3e" metalness={0.6} roughness={0.1} />
+      {/* Roof cap — hexagonal */}
+      <mesh position={[0, 5.42, 0]}>
+        <cylinderGeometry args={[3.20, 3.20, 0.06, 6]} />
+        <meshStandardMaterial color="#1e2e3e" metalness={0.60} roughness={0.10} />
       </mesh>
+      {roofEdges.map((e, i) => (
+        <mesh key={`roof-${i}`} position={[e.cx, 5.45, e.cz]} rotation={[0, e.rot, 0]}>
+          <boxGeometry args={[0.024, 0.016, e.len]} />
+          <meshStandardMaterial {...EDGE_MAT_PROPS} />
+        </mesh>
+      ))}
 
-      <pointLight position={[0, 4.2, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
+      {/* Inner glow */}
+      <pointLight position={[0, 3.8, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
     </group>
   )
 }
