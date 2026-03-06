@@ -73,41 +73,9 @@
       </nav>
     </header>
 
-    <!-- Hero -->
-    <section class="hero">
-      <div class="hero-bg-pattern" aria-hidden="true"></div>
-      <div class="container hero-content">
-        <div class="hero-badge">UCSD students only — @ucsd.edu</div>
-        <h1 class="hero-title">
-          Triton2Go food,<br />
-          <span class="highlight">delivered to your dorm.</span>
-        </h1>
-        <p class="hero-subhead">
-          Order from campus dining via Triton2Go, then request delivery in
-          NomNom. Student riders bring it to you. Flat $2.5 fee. Real-time
-          tracking.
-        </p>
-        <div class="hero-ctas">
-          <a href="#download" class="btn btn-primary">Download for iOS</a>
-          <a href="#download" class="btn btn-secondary">Get on Android</a>
-        </div>
-      </div>
-      <div class="hero-visual">
-        <div class="phone-mockup">
-          <div class="phone-frame">
-            <div class="phone-screen">
-              <div class="mock-app">
-                <div class="mock-app-header"></div>
-                <div class="mock-app-content">
-                  <div class="mock-card"></div>
-                  <div class="mock-card short"></div>
-                  <div class="mock-card"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- Hero — interactive 3D scene -->
+    <section class="hero" id="hero-section">
+      <div id="hero-3d-root"></div>
     </section>
 
     <!-- How it works -->
@@ -369,6 +337,7 @@
       </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script type="module" src="/script.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

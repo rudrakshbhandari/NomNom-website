@@ -777,16 +777,216 @@ img {
 /* ============================================
    Global red background & white text
    ============================================ */
+:root {
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --bg-light: #cc0000;
+  --bg-muted: #b30000;
+  --bg-white: #ff0000;
+  --border: rgba(255, 255, 255, 0.15);
+  --border-light: rgba(255, 255, 255, 0.1);
+}
+
 body {
   background: #ff0000;
   color: #ffffff;
 }
 
-body * {
-  color: #ffffff !important;
+a, a:visited {
+  color: #ffffff;
 }
 
-a,
-a:visited {
-  color: #ffffff !important;
+.logo {
+  color: #ffffff;
+}
+
+.header {
+  background: rgba(204, 0, 0, 0.92);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary {
+  background: #ffffff;
+  color: #ff0000;
+}
+
+.btn-primary:hover {
+  background: #f0f0f0;
+  color: #cc0000;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.feature-price {
+  color: #ffffff;
+}
+
+.audience-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.store-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.store-badge:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.store-badge small {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footer {
+  background: rgba(0, 0, 0, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.footer-bottom {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   Hero 3D Scene
+   ============================================ */
+.hero {
+  padding: 0;
+  min-height: auto;
+  background: none;
+}
+
+.hero-3d-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.hero-3d-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.hero-3d-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  padding-top: 4rem;
+}
+
+.hero-3d-text {
+  pointer-events: auto;
+  padding: 2rem;
+  margin-left: 1.5rem;
+  max-width: 36rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hero-3d-overlay .hero-badge {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.hero-3d-overlay .hero-title {
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.hero-3d-overlay .highlight {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-3d-overlay .hero-subhead {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.hero-3d-overlay .btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.hero-3d-overlay .btn-primary:hover {
+  background: var(--primary-hover);
+  color: #ffffff;
+}
+
+.hero-3d-overlay .btn-secondary {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hero-3d-progress-bar {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 2rem;
+  right: 2rem;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  z-index: 15;
+}
+
+.hero-3d-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 0.15s ease-out;
+}
+
+.hero-3d-complete {
+  position: absolute;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  text-align: center;
+  animation: fadeUp 0.6s ease-out;
+}
+
+.hero-3d-complete p {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  margin-bottom: 1rem;
+  white-space: nowrap;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .hero-3d-overlay {
+    align-items: flex-start;
+    padding-top: 5rem;
+  }
+  .hero-3d-text {
+    margin: 0 1rem;
+    padding: 1.5rem;
+  }
 }
