@@ -70,7 +70,7 @@ function hexEdgeSegments(radius) {
   return edges
 }
 
-function AngledStrut({ from, to, radius = 0.06 }) {
+function ColumnStrut({ from, to, radius = 0.07 }) {
   const { pos, quat, len } = useMemo(() => {
     const f = new THREE.Vector3(...from)
     const t = new THREE.Vector3(...to)
@@ -87,17 +87,39 @@ function AngledStrut({ from, to, radius = 0.06 }) {
   return (
     <group position={pos} quaternion={quat}>
       <mesh>
-        <cylinderGeometry args={[radius * 0.55, radius, len, 6]} />
+        <cylinderGeometry args={[radius * 0.7, radius, len, 6]} />
         <meshStandardMaterial {...STRUT_MAT_PROPS} />
       </mesh>
       <mesh>
-        <cylinderGeometry args={[radius * 0.57, radius * 1.02, len * 1.002, 6]} />
+        <cylinderGeometry args={[radius * 0.72, radius * 1.02, len * 1.002, 6]} />
         <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8}
-          wireframe toneMapped={false} transparent opacity={0.4}
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.7}
+          wireframe toneMapped={false} transparent opacity={0.35}
         />
       </mesh>
     </group>
+  )
+}
+
+function GlowStrut({ from, to, radius = 0.025 }) {
+  const { pos, quat, len } = useMemo(() => {
+    const f = new THREE.Vector3(...from)
+    const t = new THREE.Vector3(...to)
+    return {
+      pos: f.clone().add(t).multiplyScalar(0.5),
+      quat: new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        t.clone().sub(f).normalize()
+      ),
+      len: f.distanceTo(t),
+    }
+  }, [from, to])
+
+  return (
+    <mesh position={pos} quaternion={quat}>
+      <cylinderGeometry args={[radius, radius, len, 4]} />
+      <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} toneMapped={false} />
+    </mesh>
   )
 }
 
@@ -109,12 +131,12 @@ function ProceduralGeisel() {
   })
 
   const tiers = useMemo(() => [
-    { r: 1.50, y: 2.96, h: 0.32 },
-    { r: 1.98, y: 3.40, h: 0.32 },
-    { r: 2.46, y: 3.84, h: 0.32 },
-    { r: 2.94, y: 4.28, h: 0.32 },
-    { r: 3.36, y: 4.72, h: 0.32 },
-    { r: 3.72, y: 5.16, h: 0.32 },
+    { r: 1.55, y: 2.85, h: 0.22 },
+    { r: 2.00, y: 3.30, h: 0.22 },
+    { r: 2.45, y: 3.75, h: 0.22 },
+    { r: 2.90, y: 4.20, h: 0.22 },
+    { r: 3.30, y: 4.65, h: 0.22 },
+    { r: 3.65, y: 5.10, h: 0.22 },
   ], [])
 
   const tierEdges = useMemo(
@@ -122,110 +144,104 @@ function ProceduralGeisel() {
     [tiers]
   )
 
-  const tierInnerEdges = useMemo(
-    () => tiers.map(t => hexEdgeSegments(t.r * 0.6)),
-    [tiers]
-  )
-
-  const primaryStruts = useMemo(() => {
-    const s = []
-    const baseR = 0.35, topR = 1.55, baseY = 0.15, topY = 2.75
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3
-      const spread = 0.24
-      s.push(
-        { from: [baseR * Math.sin(angle - spread * 0.3), baseY, baseR * Math.cos(angle - spread * 0.3)],
-          to:   [topR  * Math.sin(angle - spread),       topY,  topR  * Math.cos(angle - spread)] },
-        { from: [baseR * Math.sin(angle + spread * 0.3), baseY, baseR * Math.cos(angle + spread * 0.3)],
-          to:   [topR  * Math.sin(angle + spread),       topY,  topR  * Math.cos(angle + spread)] },
-      )
-    }
-    return s
-  }, [])
-
-  const secondaryStruts = useMemo(() => {
-    const s = []
-    const baseR = 0.22, topR = 0.85, baseY = 0.15, topY = 2.75
-    for (let i = 0; i < 6; i++) {
-      const angle = (i + 0.5) * Math.PI / 3
-      s.push({
+  const outerColumns = useMemo(() => {
+    const cols = []
+    const baseR = 1.80, topR = 1.55, baseY = 0.12, topY = 2.72
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * Math.PI) / 6
+      cols.push({
         from: [baseR * Math.sin(angle), baseY, baseR * Math.cos(angle)],
         to:   [topR  * Math.sin(angle), topY,  topR  * Math.cos(angle)],
       })
     }
-    return s
+    return cols
   }, [])
 
-  const roofEdges = useMemo(() => hexEdgeSegments(3.50), [])
-  const roofInnerEdges = useMemo(() => hexEdgeSegments(2.80), [])
+  const innerColumns = useMemo(() => {
+    const cols = []
+    const baseR = 0.70, topR = 0.65, baseY = 0.12, topY = 2.72
+    for (let i = 0; i < 6; i++) {
+      const angle = (i + 0.5) * Math.PI / 3
+      cols.push({
+        from: [baseR * Math.sin(angle), baseY, baseR * Math.cos(angle)],
+        to:   [topR  * Math.sin(angle), topY,  topR  * Math.cos(angle)],
+      })
+    }
+    return cols
+  }, [])
+
+  const vBeams = useMemo(() => {
+    const beams = []
+    for (let ti = 0; ti < tiers.length - 1; ti++) {
+      const lo = tiers[ti], hi = tiers[ti + 1]
+      const loTopY = lo.y + lo.h / 2
+      const hiBotY = hi.y - hi.h / 2
+      for (let j = 0; j < 6; j++) {
+        const aL = (j * Math.PI) / 3
+        const aR = ((j + 1) * Math.PI) / 3
+        const aMid = ((j + 0.5) * Math.PI) / 3
+        const apex = [lo.r * Math.sin(aMid), loTopY, lo.r * Math.cos(aMid)]
+        beams.push(
+          { from: apex, to: [hi.r * Math.sin(aL), hiBotY, hi.r * Math.cos(aL)] },
+          { from: apex, to: [hi.r * Math.sin(aR), hiBotY, hi.r * Math.cos(aR)] },
+        )
+      }
+    }
+    return beams
+  }, [tiers])
+
+  const vertexStruts = useMemo(() => {
+    const struts = []
+    for (let ti = 0; ti < tiers.length - 1; ti++) {
+      const lo = tiers[ti], hi = tiers[ti + 1]
+      const loTopY = lo.y + lo.h / 2
+      const hiBotY = hi.y - hi.h / 2
+      for (let j = 0; j < 6; j++) {
+        const a = (j * Math.PI) / 3
+        struts.push({
+          from: [lo.r * Math.sin(a), loTopY, lo.r * Math.cos(a)],
+          to:   [hi.r * Math.sin(a), hiBotY, hi.r * Math.cos(a)],
+        })
+      }
+    }
+    return struts
+  }, [tiers])
+
+  const roofEdges = useMemo(() => hexEdgeSegments(3.45), [])
+  const baseEdges = useMemo(() => hexEdgeSegments(2.50), [])
 
   return (
     <group ref={g}>
-      {/* ── Central core shaft ── */}
-      <mesh position={[0, 1.40, 0]}>
-        <cylinderGeometry args={[0.18, 0.26, 2.8, 6]} />
-        <meshStandardMaterial color="#1a2a3a" metalness={0.92} roughness={0.12} />
+      {/* ── Wide base platform (plaza foundation) ── */}
+      <mesh position={[0, 0.04, 0]}>
+        <cylinderGeometry args={[2.50, 2.50, 0.08, 6]} />
+        <meshStandardMaterial color="#0c0c1a" metalness={0.85} roughness={0.25} />
       </mesh>
-      <mesh position={[0, 1.40, 0]}>
-        <cylinderGeometry args={[0.19, 0.27, 2.82, 6]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
-          wireframe toneMapped={false} transparent opacity={0.25}
-        />
-      </mesh>
-
-      {/* ── Base platform ── */}
-      <mesh position={[0, 0.06, 0]}>
-        <cylinderGeometry args={[0.65, 0.65, 0.12, 6]} />
-        <meshStandardMaterial {...STRUT_MAT_PROPS} />
-      </mesh>
-      {hexEdgeSegments(0.65).map((e, i) => (
-        <mesh key={`base-${i}`} position={[e.cx, 0.12, e.cz]} rotation={[0, e.rot, 0]}>
-          <boxGeometry args={[0.020, 0.014, e.len]} />
+      {baseEdges.map((e, i) => (
+        <mesh key={`base-${i}`} position={[e.cx, 0.08, e.cz]} rotation={[0, e.rot, 0]}>
+          <boxGeometry args={[0.022, 0.014, e.len]} />
           <meshStandardMaterial {...EDGE_MAT_PROPS} />
         </mesh>
       ))}
 
-      {/* ── Primary V-shaped support struts (12) ── */}
-      {primaryStruts.map((s, i) => (
-        <AngledStrut key={`ps-${i}`} from={s.from} to={s.to} />
+      {/* ── 12 outer support columns (wide perimeter, NOT converging) ── */}
+      {outerColumns.map((c, i) => (
+        <ColumnStrut key={`oc-${i}`} from={c.from} to={c.to} radius={0.08} />
       ))}
 
-      {/* ── Secondary inner supports (6) ── */}
-      {secondaryStruts.map((s, i) => (
-        <AngledStrut key={`ss-${i}`} from={s.from} to={s.to} radius={0.04} />
-      ))}
-
-      {/* ── Transition collar where supports meet building ── */}
-      <mesh position={[0, 2.78, 0]}>
-        <cylinderGeometry args={[1.55, 1.25, 0.14, 6]} />
-        <meshPhysicalMaterial
-          color="#152535" metalness={0.30} roughness={0.10}
-          transparent opacity={0.50}
-        />
-      </mesh>
-      {hexEdgeSegments(1.55).map((e, i) => (
-        <mesh key={`collar-t-${i}`} position={[e.cx, 2.85, e.cz]} rotation={[0, e.rot, 0]}>
-          <boxGeometry args={[0.024, 0.016, e.len]} />
-          <meshStandardMaterial {...EDGE_MAT_PROPS} />
-        </mesh>
-      ))}
-      {hexEdgeSegments(1.25).map((e, i) => (
-        <mesh key={`collar-b-${i}`} position={[e.cx, 2.71, e.cz]} rotation={[0, e.rot, 0]}>
-          <boxGeometry args={[0.020, 0.014, e.len]} />
-          <meshStandardMaterial {...EDGE_MAT_PROPS} />
-        </mesh>
+      {/* ── 6 inner support columns (nearly vertical) ── */}
+      {innerColumns.map((c, i) => (
+        <ColumnStrut key={`ic-${i}`} from={c.from} to={c.to} radius={0.05} />
       ))}
 
       {/* ── Hexagonal floor tiers — inverted pyramid ── */}
       {tiers.map((t, ti) => (
         <group key={`tier-${ti}`}>
-          {/* Solid hex floor slab */}
           <mesh position={[0, t.y, 0]}>
             <cylinderGeometry args={[t.r, t.r, t.h, 6]} />
             <meshPhysicalMaterial
               color="#152535" metalness={0.25} roughness={0.08}
-              transparent opacity={0.60}
+              transparent opacity={0.55}
             />
           </mesh>
 
@@ -245,7 +261,7 @@ function ProceduralGeisel() {
             </mesh>
           ))}
 
-          {/* Mid-height facade line */}
+          {/* Mid-height window band line */}
           {tierEdges[ti].map((e, ei) => (
             <mesh key={`mid-${ei}`} position={[e.cx, t.y, e.cz]} rotation={[0, e.rot, 0]}>
               <boxGeometry args={[0.018, 0.010, e.len]} />
@@ -263,32 +279,28 @@ function ProceduralGeisel() {
               </mesh>
             )
           })}
-
-          {/* Inner structural hex ring on top surface */}
-          {tierInnerEdges[ti].map((e, ei) => (
-            <mesh key={`in-${ei}`} position={[e.cx, t.y + t.h / 2 - 0.004, e.cz]} rotation={[0, e.rot, 0]}>
-              <boxGeometry args={[0.012, 0.008, e.len]} />
-              <meshStandardMaterial {...DIM_EDGE_PROPS} />
-            </mesh>
-          ))}
         </group>
       ))}
 
+      {/* ── V-shaped structural beams between tiers ── */}
+      {vBeams.map((b, i) => (
+        <GlowStrut key={`vb-${i}`} from={b.from} to={b.to} />
+      ))}
+
+      {/* ── Vertex-to-vertex framing struts between tiers ── */}
+      {vertexStruts.map((s, i) => (
+        <GlowStrut key={`vs-${i}`} from={s.from} to={s.to} radius={0.018} />
+      ))}
+
       {/* ── Roof cap ── */}
-      <mesh position={[0, 5.42, 0]}>
-        <cylinderGeometry args={[3.50, 3.50, 0.06, 6]} />
+      <mesh position={[0, 5.30, 0]}>
+        <cylinderGeometry args={[3.45, 3.45, 0.06, 6]} />
         <meshStandardMaterial color="#1e2e3e" metalness={0.60} roughness={0.10} />
       </mesh>
       {roofEdges.map((e, i) => (
-        <mesh key={`roof-${i}`} position={[e.cx, 5.45, e.cz]} rotation={[0, e.rot, 0]}>
+        <mesh key={`roof-${i}`} position={[e.cx, 5.33, e.cz]} rotation={[0, e.rot, 0]}>
           <boxGeometry args={[0.026, 0.016, e.len]} />
           <meshStandardMaterial {...EDGE_MAT_PROPS} />
-        </mesh>
-      ))}
-      {roofInnerEdges.map((e, i) => (
-        <mesh key={`roofin-${i}`} position={[e.cx, 5.44, e.cz]} rotation={[0, e.rot, 0]}>
-          <boxGeometry args={[0.014, 0.010, e.len]} />
-          <meshStandardMaterial {...DIM_EDGE_PROPS} />
         </mesh>
       ))}
 
