@@ -321,7 +321,7 @@ function GeiselModel() {
 
 const MAP_W = 34, MAP_H = 19.7
 const METERS_PER_UNIT = 60
-const GEISEL_SCALE = 0.12
+const GEISEL_SCALE = 0.18
 
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x: -4.8,  z: -0.4,  w: 0, d: 0, h: 0, isGeisel: true },
@@ -472,34 +472,34 @@ function CampusBuilding({ landmark, selected, onSelect }) {
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
         >
-          <cylinderGeometry args={[0.7, 0.7, 0.8, 8]} />
+          <cylinderGeometry args={[1, 1, 1.2, 8]} />
           <meshStandardMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
         {selected && (
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-            <ringGeometry args={[0.65, 0.78, 32]} />
+            <ringGeometry args={[0.95, 1.12, 32]} />
             <meshStandardMaterial
               color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
               transparent opacity={0.45} toneMapped={false} side={THREE.DoubleSide}
             />
           </mesh>
         )}
-        <mesh position={[0, 0.75, 0]}>
-          <cylinderGeometry args={[0.01, 0.01, 0.5, 4]} />
+        <mesh position={[0, 1.1, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.6, 4]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
             transparent opacity={selected ? 0.5 : 0.2} toneMapped={false}
           />
         </mesh>
-        <mesh position={[0, 1.05, 0]}>
-          <sphereGeometry args={[0.06, 8, 8]} />
+        <mesh position={[0, 1.45, 0]}>
+          <sphereGeometry args={[0.07, 8, 8]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT}
             emissiveIntensity={selected ? 3 : 1.5} toneMapped={false}
           />
         </mesh>
-        <pointLight position={[0, 1.05, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={3} />
-        <Html center position={[0, 1.30, 0]} style={{ pointerEvents: 'none' }}>
+        <pointLight position={[0, 1.45, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={3} />
+        <Html center position={[0, 1.75, 0]} style={{ pointerEvents: 'none' }}>
           <div style={{
             color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
