@@ -321,7 +321,7 @@ function GeiselModel() {
 
 const MAP_W = 34, MAP_H = 19.7
 const METERS_PER_UNIT = 60
-const GEISEL_SCALE = 0.18
+const GEISEL_SCALE = 0.28
 
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x: -4.8,  z: -0.4,  w: 0, d: 0, h: 0, isGeisel: true },
@@ -445,6 +445,12 @@ function CampusGrid() {
    Abstract holographic campus building
    ═══════════════════════════════════════════════ */
 
+function seededRng(str) {
+  let s = 0
+  for (let i = 0; i < str.length; i++) s = s * 31 + str.charCodeAt(i)
+  return () => { s = (s * 16807 + 11) % 2147483647; return (s & 0x7fffffff) / 2147483647 }
+}
+
 function CampusBuilding({ landmark, selected, onSelect }) {
   const { id, x, z, w, d, h, isGeisel, name } = landmark
   const [hovered, setHovered] = useState(false)
@@ -454,15 +460,25 @@ function CampusBuilding({ landmark, selected, onSelect }) {
     onSelect(id)
   }, [onSelect, id])
 
-  const floors = useMemo(() => {
-    if (h < 0.1) return []
-    const count = Math.max(2, Math.floor(h / 0.13))
-    const arr = []
-    for (let i = 1; i <= count; i++) arr.push(-h / 2 + i * (h / (count + 1)))
-    return arr
-  }, [h])
+  const cluster = useMemo(() => {
+    if (h < 0.05 || isGeisel) return []
+    const rng = seededRng(id)
+    const count = 3 + Math.floor(rng() * 3)
+    const items = []
+    for (let i = 0; i < count; i++) {
+      const bw = w * (0.18 + rng() * 0.22)
+      const bd = d * (0.18 + rng() * 0.22)
+      const bh = h * (0.45 + rng() * 0.8)
+      const ox = (rng() - 0.5) * (w - bw) * 0.85
+      const oz = (rng() - 0.5) * (d - bd) * 0.85
+      items.push({ w: bw, d: bd, h: bh, ox, oz })
+    }
+    items.sort((a, b) => b.h - a.h)
+    return items
+  }, [id, w, d, h, isGeisel])
 
   if (isGeisel) {
+    const gH = 4.4 * GEISEL_SCALE
     return (
       <group position={[x, 0.03, z]}>
         <group scale={[GEISEL_SCALE, GEISEL_SCALE, GEISEL_SCALE]}>
@@ -472,39 +488,39 @@ function CampusBuilding({ landmark, selected, onSelect }) {
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
         >
-          <cylinderGeometry args={[1, 1, 1.2, 8]} />
+          <cylinderGeometry args={[1.3, 1.3, gH, 8]} />
           <meshStandardMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
         {selected && (
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-            <ringGeometry args={[0.95, 1.12, 32]} />
+            <ringGeometry args={[1.2, 1.4, 32]} />
             <meshStandardMaterial
               color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
               transparent opacity={0.45} toneMapped={false} side={THREE.DoubleSide}
             />
           </mesh>
         )}
-        <mesh position={[0, 1.1, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 0.6, 4]} />
+        <mesh position={[0, gH + 0.2, 0]}>
+          <cylinderGeometry args={[0.015, 0.015, 0.5, 4]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
             transparent opacity={selected ? 0.5 : 0.2} toneMapped={false}
           />
         </mesh>
-        <mesh position={[0, 1.45, 0]}>
-          <sphereGeometry args={[0.07, 8, 8]} />
+        <mesh position={[0, gH + 0.5, 0]}>
+          <sphereGeometry args={[0.08, 8, 8]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT}
             emissiveIntensity={selected ? 3 : 1.5} toneMapped={false}
           />
         </mesh>
-        <pointLight position={[0, 1.45, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={3} />
-        <Html center position={[0, 1.75, 0]} style={{ pointerEvents: 'none' }}>
+        <pointLight position={[0, gH + 0.5, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={4} />
+        <Html center position={[0, gH + 0.8, 0]} style={{ pointerEvents: 'none' }}>
           <div style={{
             color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-            textShadow: '0 0 10px rgba(255,45,45,0.5)',
-            opacity: selected || hovered ? 1 : 0.7,
+            fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+            textShadow: '0 0 12px rgba(255,45,45,0.6)',
+            opacity: selected || hovered ? 1 : 0.75,
           }}>{name}</div>
         </Html>
       </group>
@@ -532,103 +548,86 @@ function CampusBuilding({ landmark, selected, onSelect }) {
     )
   }
 
+  const tallest = cluster.length > 0 ? cluster[0].h : h
   const ringR = Math.max(w, d) * 0.65
-  const edgeOp = selected ? 0.5 : hovered ? 0.35 : 0.25
+  const wfOp = selected ? 0.50 : hovered ? 0.32 : 0.18
+  const fillOp = selected ? 0.10 : hovered ? 0.06 : 0.025
+  const edgeOp = selected ? 0.45 : hovered ? 0.30 : 0.20
 
   return (
-    <group position={[x, h / 2 + 0.03, z]}>
+    <group position={[x, 0.03, z]}>
+      {/* Invisible click target covering full footprint */}
+      <mesh position={[0, tallest / 2, 0]}
+        onClick={handleClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <boxGeometry args={[w, tallest, d]} />
+        <meshStandardMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+
       {/* Base platform slab */}
-      <mesh position={[0, -h / 2 - 0.01, 0]}>
-        <boxGeometry args={[w + 0.08, 0.02, d + 0.08]} />
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[w + 0.06, 0.015, d + 0.06]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
           transparent opacity={0.10} toneMapped={false}
         />
       </mesh>
 
-      {/* Main body — transparent fill (click target) */}
-      <mesh onClick={handleClick}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-      >
-        <boxGeometry args={[w, h, d]} />
-        <meshStandardMaterial
-          color={ACCENT} transparent
-          opacity={selected ? 0.12 : hovered ? 0.07 : 0.03}
-          metalness={0.85} roughness={0.15}
-        />
-      </mesh>
-
-      {/* Wireframe overlay */}
-      <mesh>
-        <boxGeometry args={[w, h, d]} />
-        <meshStandardMaterial
-          color={ACCENT} wireframe transparent
-          opacity={selected ? 0.55 : hovered ? 0.35 : 0.18}
-        />
-      </mesh>
-
-      {/* Interior floor lines */}
-      {floors.map((fy, fi) => (
-        <mesh key={`fl-${fi}`} position={[0, fy, 0]}>
-          <boxGeometry args={[w * 0.90, 0.005, d * 0.90]} />
-          <meshStandardMaterial
-            color={ACCENT} emissive={ACCENT} emissiveIntensity={0.6}
-            transparent opacity={0.08} toneMapped={false}
-          />
-        </mesh>
+      {/* Building cluster */}
+      {cluster.map((b, bi) => (
+        <group key={`b-${bi}`} position={[b.ox, b.h / 2, b.oz]}>
+          {/* Transparent fill */}
+          <mesh>
+            <boxGeometry args={[b.w, b.h, b.d]} />
+            <meshStandardMaterial
+              color={ACCENT} transparent opacity={fillOp}
+              metalness={0.85} roughness={0.15}
+            />
+          </mesh>
+          {/* Wireframe */}
+          <mesh>
+            <boxGeometry args={[b.w, b.h, b.d]} />
+            <meshStandardMaterial color={ACCENT} wireframe transparent opacity={wfOp} />
+          </mesh>
+          {/* Corner edge glow */}
+          {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], ci) => (
+            <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]}>
+              <boxGeometry args={[0.018, b.h, 0.018]} />
+              <meshStandardMaterial
+                color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2}
+                transparent opacity={edgeOp} toneMapped={false}
+              />
+            </mesh>
+          ))}
+          {/* Top edge glow (tallest building only) */}
+          {bi === 0 && (
+            <>
+              <mesh position={[0, b.h / 2, -b.d / 2]}>
+                <boxGeometry args={[b.w, 0.014, 0.014]} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+              <mesh position={[0, b.h / 2, b.d / 2]}>
+                <boxGeometry args={[b.w, 0.014, 0.014]} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+              <mesh position={[-b.w / 2, b.h / 2, 0]}>
+                <boxGeometry args={[0.014, 0.014, b.d]} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+              <mesh position={[b.w / 2, b.h / 2, 0]}>
+                <boxGeometry args={[0.014, 0.014, b.d]} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+            </>
+          )}
+        </group>
       ))}
-
-      {/* Vertical corner edge glow */}
-      {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], i) => (
-        <mesh key={`ce-${i}`} position={[sx * w / 2, 0, sz * d / 2]}>
-          <boxGeometry args={[0.022, h, 0.022]} />
-          <meshStandardMaterial
-            color={ACCENT} emissive={ACCENT} emissiveIntensity={1.3}
-            transparent opacity={edgeOp} toneMapped={false}
-          />
-        </mesh>
-      ))}
-
-      {/* Top horizontal edge glow (4 edges) */}
-      <mesh position={[0, h / 2, -d / 2]}>
-        <boxGeometry args={[w, 0.016, 0.016]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
-      </mesh>
-      <mesh position={[0, h / 2, d / 2]}>
-        <boxGeometry args={[w, 0.016, 0.016]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
-      </mesh>
-      <mesh position={[-w / 2, h / 2, 0]}>
-        <boxGeometry args={[0.016, 0.016, d]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
-      </mesh>
-      <mesh position={[w / 2, h / 2, 0]}>
-        <boxGeometry args={[0.016, 0.016, d]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
-      </mesh>
-
-      {/* Bottom horizontal edge glow (4 edges) */}
-      <mesh position={[0, -h / 2, -d / 2]}>
-        <boxGeometry args={[w, 0.016, 0.016]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
-      </mesh>
-      <mesh position={[0, -h / 2, d / 2]}>
-        <boxGeometry args={[w, 0.016, 0.016]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
-      </mesh>
-      <mesh position={[-w / 2, -h / 2, 0]}>
-        <boxGeometry args={[0.016, 0.016, d]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
-      </mesh>
-      <mesh position={[w / 2, -h / 2, 0]}>
-        <boxGeometry args={[0.016, 0.016, d]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
-      </mesh>
 
       {/* Selection ring */}
       {selected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -h / 2 + 0.01, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
           <ringGeometry args={[ringR, ringR + 0.12, 32]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
@@ -638,25 +637,25 @@ function CampusBuilding({ landmark, selected, onSelect }) {
       )}
 
       {/* Vertical marker beam */}
-      <mesh position={[0, h / 2 + 0.3, 0]}>
-        <cylinderGeometry args={[0.01, 0.01, 0.6, 4]} />
+      <mesh position={[0, tallest + 0.25, 0]}>
+        <cylinderGeometry args={[0.01, 0.01, 0.5, 4]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
           transparent opacity={selected ? 0.5 : 0.2} toneMapped={false}
         />
       </mesh>
       {/* Marker sphere */}
-      <mesh position={[0, h / 2 + 0.65, 0]}>
+      <mesh position={[0, tallest + 0.55, 0]}>
         <sphereGeometry args={[0.05, 8, 8]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT}
           emissiveIntensity={selected ? 3 : 1.5} toneMapped={false}
         />
       </mesh>
-      <pointLight position={[0, h / 2 + 0.65, 0]} color={ACCENT} intensity={selected ? 0.6 : 0.15} distance={2.5} />
+      <pointLight position={[0, tallest + 0.55, 0]} color={ACCENT} intensity={selected ? 0.6 : 0.15} distance={2.5} />
 
       {/* Label */}
-      <Html center position={[0, h / 2 + 0.9, 0]} style={{ pointerEvents: 'none' }}>
+      <Html center position={[0, tallest + 0.8, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{
           color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
           fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
