@@ -3,7 +3,7 @@ import {
   Suspense, Component,
 } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Html } from '@react-three/drei'
+import { useGLTF, Html, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════════
@@ -39,96 +39,282 @@ class ModelErrorBoundary extends Component {
   render() { return this.state.error ? this.props.fallback : this.props.children }
 }
 
+function GeiselGLB() {
+  const { scene } = useGLTF('/models/geisel.glb')
+  return <primitive object={scene} />
+}
+
 /* ═══════════════════════════════════════════════
-   Holographic Geisel — GLB geometry with custom
-   wireframe + transparent holographic materials
+   Procedural Geisel — futuristic glass + metal
    ═══════════════════════════════════════════════ */
 
 const EDGE_MAT_PROPS = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 1.8, toneMapped: false }
 const DIM_EDGE_PROPS = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 0.9, toneMapped: false, transparent: true, opacity: 0.5 }
+const STRUT_MAT_PROPS = { color: '#1e2e3e', metalness: 0.95, roughness: 0.12 }
 
-const holoFaceMat = new THREE.MeshStandardMaterial({
-  color: '#0a0a12',
-  emissive: new THREE.Color(ACCENT),
-  emissiveIntensity: 0.15,
-  transparent: true,
-  opacity: 0.18,
-  side: THREE.DoubleSide,
-  depthWrite: false,
-  toneMapped: false,
-})
-
-const holoWireMat = new THREE.MeshStandardMaterial({
-  color: ACCENT,
-  emissive: new THREE.Color(ACCENT),
-  emissiveIntensity: 1.8,
-  wireframe: true,
-  toneMapped: false,
-})
-
-function HolographicGeisel() {
-  const { scene } = useGLTF('/models/geisel.glb')
-  const groupRef = useRef()
-  const matsRef = useRef({ face: null, wire: null })
-
-  const hologram = useMemo(() => {
-    const root = scene.clone(true)
-
-    root.traverse((child) => {
-      if (!child.isMesh) return
-
-      if (child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach(m => m.dispose && m.dispose())
-        } else {
-          child.material.dispose && child.material.dispose()
-        }
-      }
-      child.material = holoFaceMat
+function hexEdgeSegments(radius) {
+  const edges = []
+  for (let i = 0; i < 6; i++) {
+    const a1 = (i * Math.PI) / 3
+    const a2 = ((i + 1) * Math.PI) / 3
+    const x1 = radius * Math.sin(a1), z1 = radius * Math.cos(a1)
+    const x2 = radius * Math.sin(a2), z2 = radius * Math.cos(a2)
+    const dx = x2 - x1, dz = z2 - z1
+    edges.push({
+      cx: (x1 + x2) / 2,
+      cz: (z1 + z2) / 2,
+      len: Math.sqrt(dx * dx + dz * dz),
+      rot: Math.atan2(dx, dz),
     })
+  }
+  return edges
+}
 
-    return root
-  }, [scene])
-
-  const wireClone = useMemo(() => {
-    const root = scene.clone(true)
-    root.traverse((child) => {
-      if (!child.isMesh) return
-      if (child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach(m => m.dispose && m.dispose())
-        } else {
-          child.material.dispose && child.material.dispose()
-        }
-      }
-      child.material = holoWireMat
-    })
-    return root
-  }, [scene])
-
-  useFrame(({ clock }) => {
-    if (!groupRef.current) return
-    const pulse = 0.15 + Math.sin(clock.elapsedTime * 0.6) * 0.06
-    holoFaceMat.emissiveIntensity = pulse
-    const wirePulse = 1.6 + Math.sin(clock.elapsedTime * 0.8) * 0.25
-    holoWireMat.emissiveIntensity = wirePulse
-    groupRef.current.position.y = Math.sin(clock.elapsedTime * 0.3) * 0.04
-  })
+function ColumnStrut({ from, to, radius = 0.07 }) {
+  const { pos, quat, len } = useMemo(() => {
+    const f = new THREE.Vector3(...from)
+    const t = new THREE.Vector3(...to)
+    return {
+      pos: f.clone().add(t).multiplyScalar(0.5),
+      quat: new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        t.clone().sub(f).normalize()
+      ),
+      len: f.distanceTo(t),
+    }
+  }, [from, to])
 
   return (
-    <group ref={groupRef}>
-      <primitive object={hologram} />
-      <primitive object={wireClone} />
-      <pointLight position={[0, 2.5, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
+    <group position={pos} quaternion={quat}>
+      <mesh>
+        <cylinderGeometry args={[radius * 0.7, radius, len, 6]} />
+        <meshStandardMaterial {...STRUT_MAT_PROPS} />
+      </mesh>
+      <mesh>
+        <cylinderGeometry args={[radius * 0.72, radius * 1.02, len * 1.002, 6]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.7}
+          wireframe toneMapped={false} transparent opacity={0.35}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+function GlowStrut({ from, to, radius = 0.025 }) {
+  const { pos, quat, len } = useMemo(() => {
+    const f = new THREE.Vector3(...from)
+    const t = new THREE.Vector3(...to)
+    return {
+      pos: f.clone().add(t).multiplyScalar(0.5),
+      quat: new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        t.clone().sub(f).normalize()
+      ),
+      len: f.distanceTo(t),
+    }
+  }, [from, to])
+
+  return (
+    <mesh position={pos} quaternion={quat}>
+      <cylinderGeometry args={[radius, radius, len, 4]} />
+      <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} toneMapped={false} />
+    </mesh>
+  )
+}
+
+function ProceduralGeisel() {
+  const g = useRef()
+
+  useFrame(({ clock }) => {
+    if (g.current) g.current.position.y = Math.sin(clock.elapsedTime * 0.3) * 0.04
+  })
+
+  const tiers = useMemo(() => [
+    { r: 1.55, y: 1.94, h: 0.22 },
+    { r: 2.00, y: 2.39, h: 0.22 },
+    { r: 2.45, y: 2.84, h: 0.22 },
+    { r: 2.90, y: 3.29, h: 0.22 },
+    { r: 3.30, y: 3.74, h: 0.22 },
+    { r: 3.65, y: 4.19, h: 0.22 },
+  ], [])
+
+  const tierEdges = useMemo(
+    () => tiers.map(t => hexEdgeSegments(t.r)),
+    [tiers]
+  )
+
+  const outerColumns = useMemo(() => {
+    const cols = []
+    const baseR = 1.80, topR = 1.55, baseY = 0.12, topY = 1.81
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * Math.PI) / 6
+      cols.push({
+        from: [baseR * Math.sin(angle), baseY, baseR * Math.cos(angle)],
+        to:   [topR  * Math.sin(angle), topY,  topR  * Math.cos(angle)],
+      })
+    }
+    return cols
+  }, [])
+
+  const innerColumns = useMemo(() => {
+    const cols = []
+    const baseR = 0.70, topR = 0.65, baseY = 0.12, topY = 1.81
+    for (let i = 0; i < 6; i++) {
+      const angle = (i + 0.5) * Math.PI / 3
+      cols.push({
+        from: [baseR * Math.sin(angle), baseY, baseR * Math.cos(angle)],
+        to:   [topR  * Math.sin(angle), topY,  topR  * Math.cos(angle)],
+      })
+    }
+    return cols
+  }, [])
+
+  const vBeams = useMemo(() => {
+    const beams = []
+    for (let ti = 0; ti < tiers.length - 1; ti++) {
+      const lo = tiers[ti], hi = tiers[ti + 1]
+      const loTopY = lo.y + lo.h / 2
+      const hiBotY = hi.y - hi.h / 2
+      for (let j = 0; j < 6; j++) {
+        const aL = (j * Math.PI) / 3
+        const aR = ((j + 1) * Math.PI) / 3
+        const aMid = ((j + 0.5) * Math.PI) / 3
+        const apex = [lo.r * Math.sin(aMid), loTopY, lo.r * Math.cos(aMid)]
+        beams.push(
+          { from: apex, to: [hi.r * Math.sin(aL), hiBotY, hi.r * Math.cos(aL)] },
+          { from: apex, to: [hi.r * Math.sin(aR), hiBotY, hi.r * Math.cos(aR)] },
+        )
+      }
+    }
+    return beams
+  }, [tiers])
+
+  const vertexStruts = useMemo(() => {
+    const struts = []
+    for (let ti = 0; ti < tiers.length - 1; ti++) {
+      const lo = tiers[ti], hi = tiers[ti + 1]
+      const loTopY = lo.y + lo.h / 2
+      const hiBotY = hi.y - hi.h / 2
+      for (let j = 0; j < 6; j++) {
+        const a = (j * Math.PI) / 3
+        struts.push({
+          from: [lo.r * Math.sin(a), loTopY, lo.r * Math.cos(a)],
+          to:   [hi.r * Math.sin(a), hiBotY, hi.r * Math.cos(a)],
+        })
+      }
+    }
+    return struts
+  }, [tiers])
+
+  const roofEdges = useMemo(() => hexEdgeSegments(3.45), [])
+  const baseEdges = useMemo(() => hexEdgeSegments(2.50), [])
+
+  return (
+    <group ref={g}>
+      {/* ── Wide base platform (plaza foundation) ── */}
+      <mesh position={[0, 0.04, 0]}>
+        <cylinderGeometry args={[2.50, 2.50, 0.08, 6]} />
+        <meshStandardMaterial color="#0c0c1a" metalness={0.85} roughness={0.25} />
+      </mesh>
+      {baseEdges.map((e, i) => (
+        <mesh key={`base-${i}`} position={[e.cx, 0.08, e.cz]} rotation={[0, e.rot, 0]}>
+          <boxGeometry args={[0.022, 0.014, e.len]} />
+          <meshStandardMaterial {...EDGE_MAT_PROPS} />
+        </mesh>
+      ))}
+
+      {/* ── 12 outer support columns (wide perimeter, NOT converging) ── */}
+      {outerColumns.map((c, i) => (
+        <ColumnStrut key={`oc-${i}`} from={c.from} to={c.to} radius={0.10} />
+      ))}
+
+      {/* ── 6 inner support columns (nearly vertical) ── */}
+      {innerColumns.map((c, i) => (
+        <ColumnStrut key={`ic-${i}`} from={c.from} to={c.to} radius={0.07} />
+      ))}
+
+      {/* ── Hexagonal floor tiers — inverted pyramid ── */}
+      {tiers.map((t, ti) => (
+        <group key={`tier-${ti}`}>
+          <mesh position={[0, t.y, 0]}>
+            <cylinderGeometry args={[t.r, t.r, t.h, 6]} />
+            <meshPhysicalMaterial
+              color="#152535" metalness={0.25} roughness={0.08}
+              transparent opacity={0.55}
+            />
+          </mesh>
+
+          {/* Top perimeter edge glow */}
+          {tierEdges[ti].map((e, ei) => (
+            <mesh key={`top-${ei}`} position={[e.cx, t.y + t.h / 2, e.cz]} rotation={[0, e.rot, 0]}>
+              <boxGeometry args={[0.026, 0.016, e.len]} />
+              <meshStandardMaterial {...EDGE_MAT_PROPS} />
+            </mesh>
+          ))}
+
+          {/* Bottom perimeter edge glow */}
+          {tierEdges[ti].map((e, ei) => (
+            <mesh key={`bot-${ei}`} position={[e.cx, t.y - t.h / 2, e.cz]} rotation={[0, e.rot, 0]}>
+              <boxGeometry args={[0.026, 0.016, e.len]} />
+              <meshStandardMaterial {...EDGE_MAT_PROPS} />
+            </mesh>
+          ))}
+
+          {/* Mid-height window band line */}
+          {tierEdges[ti].map((e, ei) => (
+            <mesh key={`mid-${ei}`} position={[e.cx, t.y, e.cz]} rotation={[0, e.rot, 0]}>
+              <boxGeometry args={[0.018, 0.010, e.len]} />
+              <meshStandardMaterial {...DIM_EDGE_PROPS} />
+            </mesh>
+          ))}
+
+          {/* Vertical corner edges */}
+          {Array.from({ length: 6 }).map((_, vi) => {
+            const a = (vi * Math.PI) / 3
+            return (
+              <mesh key={`v-${vi}`} position={[t.r * Math.sin(a), t.y, t.r * Math.cos(a)]}>
+                <boxGeometry args={[0.016, t.h, 0.016]} />
+                <meshStandardMaterial {...EDGE_MAT_PROPS} />
+              </mesh>
+            )
+          })}
+        </group>
+      ))}
+
+      {/* ── V-shaped structural beams between tiers ── */}
+      {vBeams.map((b, i) => (
+        <GlowStrut key={`vb-${i}`} from={b.from} to={b.to} />
+      ))}
+
+      {/* ── Vertex-to-vertex framing struts between tiers ── */}
+      {vertexStruts.map((s, i) => (
+        <GlowStrut key={`vs-${i}`} from={s.from} to={s.to} radius={0.018} />
+      ))}
+
+      {/* ── Roof cap ── */}
+      <mesh position={[0, 4.39, 0]}>
+        <cylinderGeometry args={[3.45, 3.45, 0.06, 6]} />
+        <meshStandardMaterial color="#1e2e3e" metalness={0.60} roughness={0.10} />
+      </mesh>
+      {roofEdges.map((e, i) => (
+        <mesh key={`roof-${i}`} position={[e.cx, 4.42, e.cz]} rotation={[0, e.rot, 0]}>
+          <boxGeometry args={[0.026, 0.016, e.len]} />
+          <meshStandardMaterial {...EDGE_MAT_PROPS} />
+        </mesh>
+      ))}
+
+      {/* Inner glow */}
+      <pointLight position={[0, 2.90, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
     </group>
   )
 }
 
 function GeiselModel() {
   return (
-    <ModelErrorBoundary fallback={null}>
-      <Suspense fallback={null}>
-        <HolographicGeisel />
+    <ModelErrorBoundary fallback={<ProceduralGeisel />}>
+      <Suspense fallback={<ProceduralGeisel />}>
+        <GeiselGLB />
       </Suspense>
     </ModelErrorBoundary>
   )
@@ -144,6 +330,8 @@ const METERS_PER_UNIT = 50
 const GEISEL_SCALE = 0.15
 const CAMPUS_W = 28
 const CAMPUS_H = 28
+const PLANE_OX = 4.5
+const PLANE_OZ = -2.0
 
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x:  0.0,  z:  0.0,  w: 0, d: 0, h: 0, isGeisel: true },
@@ -210,440 +398,73 @@ function CampusGrid() {
 }
 
 /* ═══════════════════════════════════════════════
-   Campus wireframe — glowing holographic blueprint
-   All lines use the same emissive style as Geisel
+   Satellite map hologram — Geisel-matched glow
    ═══════════════════════════════════════════════ */
 
-function CampusWireframe() {
-  const segments = useMemo(() => {
-    const bright = []
-    const normal = []
-    const dim = []
-
-    const poly = (arr, pts) => {
-      for (let i = 0; i < pts.length - 1; i++) arr.push([pts[i], pts[i + 1]])
-    }
-    const rect = (arr, cx, cz, w, d) => {
-      const hw = w / 2, hd = d / 2
-      arr.push([[cx - hw, cz - hd], [cx + hw, cz - hd]])
-      arr.push([[cx + hw, cz - hd], [cx + hw, cz + hd]])
-      arr.push([[cx + hw, cz + hd], [cx - hw, cz + hd]])
-      arr.push([[cx - hw, cz + hd], [cx - hw, cz - hd]])
-    }
-    const closedPoly = (arr, pts) => {
-      for (let i = 0; i < pts.length; i++)
-        arr.push([pts[i], pts[(i + 1) % pts.length]])
-    }
-
-    /* ══════════════════════════════════════════════
-       CAMPUS PERIMETER — traced from map boundary
-       ══════════════════════════════════════════════ */
-    closedPoly(bright, [
-      [-9.0, -9.5], [-7.0, -10.2], [-4.0, -9.8], [-1.0, -9.0],
-      [2.5, -8.5], [5.0, -8.0], [7.0, -7.0], [8.5, -5.5],
-      [9.0, -3.0], [9.0, -0.5], [8.5, 2.0], [8.0, 4.5],
-      [7.0, 7.0], [5.5, 9.0], [3.0, 10.5], [0.0, 11.0],
-      [-3.5, 11.0], [-6.0, 10.0], [-7.5, 8.5], [-8.0, 6.5],
-      [-8.5, 4.0], [-8.8, 1.5], [-8.8, -1.0], [-8.8, -3.5],
-      [-9.0, -6.0], [-9.2, -8.0],
-    ])
-
-    /* ══════════════════════════════════════════════
-       ROADS — traced from map road network
-       ══════════════════════════════════════════════ */
-
-    /* N Torrey Pines Road — western arterial (N→S along coast) */
-    poly(normal, [
-      [-8.8, -9.5], [-8.6, -7.5], [-8.3, -5.5], [-8.0, -3.5],
-      [-7.8, -1.5], [-7.5, 0.5], [-7.3, 2.5], [-7.0, 4.5],
-      [-7.0, 6.5], [-7.2, 8.5], [-7.5, 10.0],
-    ])
-
-    /* Scholars Dr / N campus E-W — through ERC, past RIMAC */
-    poly(normal, [
-      [-8.0, -5.0], [-6.5, -5.5], [-5.0, -5.0], [-3.5, -4.8],
-      [-2.0, -5.0], [-0.5, -5.5], [1.0, -5.8], [3.0, -5.5],
-      [5.0, -5.0], [7.0, -5.5],
-    ])
-
-    /* Voigt Dr — E-W through central campus (Marshall → Warren) */
-    poly(normal, [
-      [-7.5, -1.5], [-5.5, -1.8], [-4.0, -1.5], [-2.5, -1.2],
-      [-0.8, -1.0], [0.5, -1.2], [2.0, -1.5], [3.5, -2.0],
-      [5.0, -2.5], [7.0, -3.0],
-    ])
-
-    /* Russell Ln / Gilman — E-W south of Geisel */
-    poly(normal, [
-      [-7.3, 2.5], [-5.5, 2.0], [-4.0, 1.8], [-2.5, 1.5],
-      [-1.0, 1.2], [0.5, 1.0], [2.0, 1.2], [3.5, 2.0],
-      [5.0, 2.5], [6.5, 3.0],
-    ])
-
-    /* La Jolla Village Dr — southern E-W arterial */
-    poly(normal, [
-      [-8.0, 8.0], [-6.0, 8.2], [-4.0, 8.0], [-2.0, 8.3],
-      [0.0, 8.5], [2.0, 8.5], [4.0, 8.3], [6.0, 8.5], [8.0, 8.5],
-    ])
-
-    /* Eastern N-S connector (past Seventh, Warren, Sixth) */
-    poly(normal, [
-      [6.5, -7.0], [6.0, -5.0], [5.5, -3.0], [5.5, -1.0],
-      [5.5, 1.0], [5.5, 3.0], [5.5, 5.0], [5.5, 7.0], [6.0, 8.5],
-    ])
-
-    /* Central N-S road (through campus core) */
-    poly(normal, [
-      [-0.3, -7.5], [-0.3, -5.5], [-0.2, -3.5], [0.0, -1.5],
-      [0.0, 0.5], [0.0, 2.5], [-0.2, 4.5], [-0.3, 6.5], [-0.5, 8.0],
-    ])
-
-    /* NW spur — Rady / Torrey Pines Center road */
-    poly(normal, [
-      [-8.5, -9.0], [-7.0, -8.5], [-6.0, -8.0], [-5.0, -7.5],
-      [-3.5, -7.2],
-    ])
-
-    /* SW connector — Muir to Marshall */
-    poly(normal, [
-      [-7.0, 5.0], [-6.5, 3.5], [-5.5, 2.0], [-5.0, 0.5],
-      [-4.5, -0.5], [-4.5, -2.0],
-    ])
-
-    /* SE diagonal — Price area to Sixth */
-    poly(normal, [
-      [2.0, 2.0], [2.5, 2.8], [3.0, 3.5], [3.5, 4.0],
-    ])
-
-    /* ══════════════════════════════════════════════
-       PATHS — pedestrian spines
-       ══════════════════════════════════════════════ */
-
-    /* Library Walk — main E-W pedestrian spine */
-    poly(dim, [
-      [-4.0, 0.5], [-2.5, 0.6], [-1.0, 0.7], [0.3, 0.8],
-      [1.5, 0.8], [3.0, 0.7], [4.0, 0.5],
-    ])
-
-    /* Ridge Walk — N-S through center */
-    poly(dim, [
-      [0.0, -2.5], [0.0, -1.5], [0.0, -0.5], [0.2, 0.3],
-      [0.3, 0.8], [0.3, 1.5], [0.2, 2.5],
-    ])
-
-    /* Warren → Geisel path */
-    poly(dim, [
-      [2.0, -2.0], [1.5, -1.2], [1.0, -0.3], [0.5, 0.3],
-    ])
-
-    /* Marshall → Geisel path */
-    poly(dim, [
-      [-4.2, -1.1], [-3.0, -0.6], [-1.5, -0.2], [0.0, 0.0],
-    ])
-
-    /* Muir → center path */
-    poly(dim, [
-      [-6.7, 4.5], [-5.5, 3.5], [-4.0, 2.5], [-2.5, 1.5],
-      [-1.0, 0.8],
-    ])
-
-    /* ERC → RIMAC path */
-    poly(dim, [
-      [-5.9, -5.9], [-4.0, -5.5], [-2.0, -5.7], [0.0, -5.9],
-    ])
-
-    /* Revelle → School of Medicine path */
-    poly(dim, [
-      [-4.5, 8.4], [-3.5, 7.0], [-3.0, 6.0], [-2.5, 5.5],
-    ])
-
-    /* Sixth → Price path */
-    poly(dim, [
-      [3.6, 3.9], [3.0, 3.0], [2.5, 2.2], [2.0, 1.7],
-    ])
-
-    /* ══════════════════════════════════════════════
-       BUILDINGS — traced from map footprints
-       Every shape corresponds to a real structure
-       ══════════════════════════════════════════════ */
-
-    /* ── Geisel Library base (hexagonal footprint) ── */
-    closedPoly(bright, [
-      [-0.45, -0.50], [0.45, -0.50], [0.65, 0.00],
-      [0.45, 0.50], [-0.45, 0.50], [-0.65, 0.00],
-    ])
-
-    /* ── Center Hall / CLICS (large, SW of Geisel) ── */
-    rect(bright, -1.5, 0.4, 1.1, 0.65)
-
-    /* ── AP&M Building (NW of Geisel) ── */
-    rect(bright, -0.6, -1.1, 0.9, 0.55)
-
-    /* ── York Hall (W of Geisel) ── */
-    rect(bright, -2.1, -0.3, 0.6, 0.45)
-
-    /* ── Urey Hall (between Geisel and AP&M) ── */
-    rect(bright, -1.0, -0.7, 0.5, 0.4)
-
-    /* ── Mayer Hall (NW of Geisel) ── */
-    rect(bright, -0.5, -1.7, 0.5, 0.4)
-
-    /* ── EBU-I / Jacobs Hall (E of Geisel) ── */
-    rect(bright, 1.1, -0.6, 0.8, 0.5)
-
-    /* ── Cognitive Science Bldg (SE of Geisel) ── */
-    rect(bright, 1.2, 0.4, 0.7, 0.5)
-
-    /* ── Pepper Canyon Hall (E of Geisel) ── */
-    rect(bright, 1.8, -0.1, 0.6, 0.4)
-
-    /* ── Galbraith Hall (S of Geisel) ── */
-    rect(bright, 0.0, 1.4, 0.55, 0.4)
-
-    /* ── Peterson Hall (SE of Geisel) ── */
-    rect(bright, 0.8, 1.2, 0.5, 0.4)
-
-    /* ── University Center (S of Geisel) ── */
-    rect(bright, -0.8, 1.0, 0.75, 0.5)
-
-    /* ── Price Center (L-shaped complex) ── */
-    closedPoly(bright, [
-      [1.3, 1.3], [2.8, 1.3], [2.8, 1.9], [2.2, 1.9],
-      [2.2, 2.3], [1.3, 2.3],
-    ])
-
-    /* ── Bookstore (N of Price Center) ── */
-    rect(bright, 1.5, 2.5, 0.8, 0.4)
-
-    /* ── Student Services Center (E of Price Center) ── */
-    rect(bright, 3.0, 2.0, 0.65, 0.5)
-
-    /* ── Parking Office (SE of Price Center) ── */
-    rect(bright, 2.5, 2.6, 0.5, 0.3)
-
-    /* ── Faculty Club (SW of Geisel) ── */
-    rect(bright, -2.2, 2.0, 0.8, 0.5)
-
-    /* ── Chancellor's Complex (S of Faculty Club) ── */
-    rect(bright, -1.2, 2.5, 0.7, 0.5)
-
-    /* ── Warren College — residential halls (grid of dorms) ── */
-    rect(bright, 1.5, -2.5, 0.65, 0.35)
-    rect(bright, 2.3, -2.5, 0.65, 0.35)
-    rect(bright, 3.0, -2.5, 0.65, 0.35)
-    rect(bright, 1.5, -1.9, 0.65, 0.35)
-    rect(bright, 2.3, -1.9, 0.65, 0.35)
-    rect(bright, 3.0, -1.9, 0.65, 0.35)
-
-    /* ── Warren Lecture Hall ── */
-    rect(bright, 2.3, -1.2, 0.85, 0.4)
-
-    /* ── Jacobs School of Engineering (E of center) ── */
-    rect(bright, 3.5, -0.5, 0.85, 0.45)
-    rect(bright, 3.5, 0.2, 0.7, 0.4)
-
-    /* ── Campus Services Complex (E of Warren) ── */
-    rect(bright, 4.6, -1.2, 1.0, 0.6)
-    rect(bright, 4.6, -0.4, 0.8, 0.5)
-
-    /* ── Canyonview Athletics (SE of Warren) ── */
-    closedPoly(dim, [
-      [4.0, 0.2], [6.0, 0.2], [6.0, 1.5], [4.0, 1.5],
-    ])
-
-    /* ── RIMAC Arena (large rectangular arena) ── */
-    rect(bright, 0.3, -5.9, 2.2, 1.3)
-
-    /* ── Fitness / Fire Course (E of RIMAC) ── */
-    rect(bright, 2.2, -5.2, 0.8, 0.55)
-
-    /* ── North Recreation Park field outline ── */
-    closedPoly(dim, [
-      [-0.5, -7.5], [1.5, -7.5], [1.5, -6.8], [-0.5, -6.8],
-    ])
-
-    /* ── Eleanor Roosevelt College buildings ── */
-    rect(bright, -6.1, -6.2, 0.9, 0.55)
-    rect(bright, -5.3, -6.4, 0.7, 0.4)
-    rect(bright, -5.3, -5.6, 0.75, 0.4)
-    rect(bright, -6.6, -5.4, 0.6, 0.5)
-
-    /* ── Institute of the Americas / IR&PS (W of ERC) ── */
-    rect(bright, -6.9, -5.0, 0.8, 0.5)
-
-    /* ── Pacific Hall (near ERC) ── */
-    rect(bright, -5.5, -4.8, 0.6, 0.4)
-
-    /* ── San Diego Supercomputer Center ── */
-    rect(bright, -3.8, -4.5, 1.1, 0.65)
-
-    /* ── Hopkins Parking Structure ── */
-    rect(normal, -2.8, -3.5, 0.95, 0.55)
-
-    /* ── Thurgood Marshall College buildings ── */
-    rect(bright, -4.5, -1.5, 0.75, 0.5)
-    rect(bright, -4.5, -0.7, 0.7, 0.4)
-    rect(bright, -3.7, -1.2, 0.6, 0.75)
-    rect(bright, -5.0, -0.1, 0.65, 0.5)
-
-    /* ── Cognitive Studies / Public Programs (W of Marshall) ── */
-    rect(bright, -5.8, -0.5, 0.7, 0.5)
-
-    /* ── Marshall College field outline ── */
-    closedPoly(dim, [
-      [-5.5, 0.4], [-3.5, 0.4], [-3.5, 1.7], [-5.5, 1.7],
-    ])
-
-    /* ── Muir College buildings ── */
-    rect(bright, -7.0, 3.8, 0.7, 0.5)
-    rect(bright, -6.3, 4.2, 0.7, 0.5)
-    rect(bright, -7.0, 4.8, 0.7, 0.4)
-    rect(bright, -6.0, 5.0, 0.65, 0.4)
-
-    /* ── Muir Student Center ── */
-    rect(bright, -5.8, 3.8, 0.5, 0.4)
-
-    /* ── Muir Field outline ── */
-    closedPoly(dim, [
-      [-7.6, 4.0], [-5.5, 4.0], [-5.5, 5.5], [-7.6, 5.5],
-    ])
-
-    /* ── Mandeville Center (performing arts, near Muir) ── */
-    rect(bright, -5.2, 3.0, 0.85, 0.5)
-
-    /* ── Visual Arts (W campus) ── */
-    rect(bright, -5.5, 2.0, 0.7, 0.5)
-
-    /* ── Sixth College buildings ── */
-    rect(bright, 3.3, 3.5, 0.7, 0.45)
-    rect(bright, 4.1, 3.5, 0.7, 0.45)
-    rect(bright, 3.3, 4.2, 0.7, 0.45)
-    rect(bright, 4.1, 4.2, 0.7, 0.45)
-
-    /* ── Pepper Canyon Apartments (S of Sixth) ── */
-    rect(bright, 4.0, 4.9, 0.7, 0.4)
-
-    /* ── Gilman Parking Structure ── */
-    rect(normal, 1.5, 3.5, 0.85, 0.5)
-
-    /* ── Seventh College buildings ── */
-    rect(bright, 4.8, -4.5, 0.7, 0.5)
-    rect(bright, 5.5, -4.5, 0.7, 0.5)
-    rect(bright, 5.1, -3.7, 0.8, 0.4)
-
-    /* ── Eighth College buildings ── */
-    rect(bright, -2.2, -7.2, 0.7, 0.5)
-    rect(bright, -1.4, -7.2, 0.7, 0.5)
-    rect(bright, -1.8, -6.5, 0.8, 0.4)
-
-    /* ── Revelle College buildings ── */
-    rect(bright, -4.8, 8.0, 0.7, 0.5)
-    rect(bright, -4.0, 8.0, 0.7, 0.5)
-    rect(bright, -4.8, 8.7, 0.7, 0.4)
-    rect(bright, -3.8, 8.7, 0.7, 0.4)
-    rect(bright, -5.0, 9.3, 0.6, 0.4)
-
-    /* ── Mandell Weiss Forum (S of Revelle) ── */
-    rect(bright, -4.5, 10.0, 0.65, 0.5)
-
-    /* ── Mandell Weiss Theatre ── */
-    rect(bright, -4.5, 10.7, 0.8, 0.5)
-
-    /* ── Theatre District buildings ── */
-    rect(bright, -3.5, 10.0, 0.7, 0.5)
-
-    /* ── School of Medicine complex ── */
-    rect(bright, -2.5, 6.0, 1.0, 0.6)
-    rect(bright, -1.5, 6.5, 0.8, 0.5)
-    rect(bright, -3.0, 7.0, 0.7, 0.45)
-    rect(bright, -1.8, 7.2, 0.6, 0.4)
-
-    /* ── VA Medical Center ── */
-    rect(bright, 2.0, 6.0, 0.9, 0.6)
-    rect(bright, 3.0, 6.4, 0.8, 0.5)
-
-    /* ── Sequoyah Hall (between SoM and center) ── */
-    rect(bright, -3.0, 5.0, 0.7, 0.5)
-
-    /* ── Medical Education / Biomedical Library ── */
-    rect(bright, -1.0, 5.5, 0.6, 0.45)
-    rect(bright, 0.5, -1.5, 0.6, 0.45)
-
-    /* ── Rady School of Management (far NW) ── */
-    rect(bright, -6.8, -8.0, 1.0, 0.65)
-    rect(bright, -5.8, -7.5, 0.7, 0.5)
-
-    /* ── North Campus Housing ── */
-    rect(bright, -3.0, -7.5, 0.8, 0.5)
-    rect(bright, -2.0, -7.8, 0.7, 0.4)
-
-    /* ── Humanities / Social Sciences (S of center) ── */
-    rect(bright, -2.5, 1.5, 0.7, 0.5)
-    rect(bright, -1.5, 1.2, 0.6, 0.4)
-
-    return { bright, normal, dim }
+function SatelliteBase() {
+  const texture = useTexture('/campus-map.png')
+
+  const scanlineTex = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 4
+    canvas.height = 8
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, 4, 8)
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'
+    ctx.fillRect(0, 0, 4, 1)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(CAMPUS_W * 2, CAMPUS_H * 2)
+    return tex
   }, [])
 
-  const lines = useMemo(() => {
-    const compute = segs => segs.map(([from, to]) => {
-      const dx = to[0] - from[0], dz = to[1] - from[1]
-      return {
-        cx: (from[0] + to[0]) / 2,
-        cz: (from[1] + to[1]) / 2,
-        len: Math.sqrt(dx * dx + dz * dz),
-        rot: Math.atan2(dx, dz),
-      }
-    })
-    return {
-      bright: compute(segments.bright),
-      normal: compute(segments.normal),
-      dim: compute(segments.dim),
-    }
-  }, [segments])
+  const diag = CAMPUS_W * Math.SQRT2 / 2
 
   return (
-    <group>
-      {/* Bright lines — perimeter + building outlines */}
-      {lines.bright.map((l, i) => (
-        <group key={`b-${i}`}>
-          <mesh position={[l.cx, 0.04, l.cz]} rotation={[0, l.rot, 0]}>
-            <boxGeometry args={[0.032, 0.018, l.len]} />
-            <meshStandardMaterial {...EDGE_MAT_PROPS} />
-          </mesh>
-          <mesh position={[l.cx, 0.04, l.cz]} rotation={[0, l.rot, 0]}>
-            <boxGeometry args={[0.08, 0.010, l.len]} />
-            <meshStandardMaterial
-              color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
-              transparent opacity={0.20} toneMapped={false}
-            />
-          </mesh>
-        </group>
-      ))}
+    <group position={[PLANE_OX, 0, PLANE_OZ]}>
+      {/* Glow halo underneath */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+        <planeGeometry args={[CAMPUS_W + 1.5, CAMPUS_H + 1.5]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.7}
+          transparent opacity={0.05} toneMapped={false} side={THREE.DoubleSide}
+        />
+      </mesh>
 
-      {/* Normal lines — roads + scattered buildings */}
-      {lines.normal.map((l, i) => (
-        <group key={`n-${i}`}>
-          <mesh position={[l.cx, 0.035, l.cz]} rotation={[0, l.rot, 0]}>
-            <boxGeometry args={[0.026, 0.015, l.len]} />
-            <meshStandardMaterial {...EDGE_MAT_PROPS} />
-          </mesh>
-          <mesh position={[l.cx, 0.035, l.cz]} rotation={[0, l.rot, 0]}>
-            <boxGeometry args={[0.065, 0.008, l.len]} />
-            <meshStandardMaterial
-              color={ACCENT} emissive={ACCENT} emissiveIntensity={0.4}
-              transparent opacity={0.15} toneMapped={false}
-            />
-          </mesh>
-        </group>
-      ))}
+      {/* Campus map — detail visible, red holographic glow through features */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
+        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
+        <meshStandardMaterial
+          map={texture}
+          color="#303030"
+          emissive={ACCENT}
+          emissiveMap={texture}
+          emissiveIntensity={1.1}
+          transparent
+          opacity={0.48}
+          toneMapped={false}
+        />
+      </mesh>
 
-      {/* Dim lines — paths */}
-      {lines.dim.map((l, i) => (
-        <mesh key={`d-${i}`} position={[l.cx, 0.03, l.cz]} rotation={[0, l.rot, 0]}>
-          <boxGeometry args={[0.018, 0.012, l.len]} />
-          <meshStandardMaterial {...DIM_EDGE_PROPS} />
-        </mesh>
-      ))}
+      {/* Scanline overlay */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.018, 0]}>
+        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
+        <meshBasicMaterial
+          map={scanlineTex}
+          transparent
+          opacity={0.10}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Edge glow border */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.016, 0]}>
+        <ringGeometry args={[diag - 0.3, diag + 0.1, 64]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8}
+          transparent opacity={0.10} toneMapped={false} side={THREE.DoubleSide}
+        />
+      </mesh>
     </group>
   )
 }
@@ -675,40 +496,6 @@ function CampusBuilding({ landmark, selected, onSelect }) {
         <group scale={[GEISEL_SCALE, GEISEL_SCALE, GEISEL_SCALE]}>
           <GeiselModel />
         </group>
-
-        {/* Holographic projection beams — vertical lines from base to grid */}
-        {[0, 1, 2, 3, 4, 5].map(i => {
-          const a = (i * Math.PI) / 3
-          const r = 0.55
-          return (
-            <mesh key={`proj-${i}`} position={[r * Math.sin(a), -0.02, r * Math.cos(a)]}>
-              <cylinderGeometry args={[0.008, 0.003, 0.12, 4]} />
-              <meshStandardMaterial
-                color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2}
-                transparent opacity={0.25} toneMapped={false}
-              />
-            </mesh>
-          )
-        })}
-
-        {/* Central projection beam */}
-        <mesh position={[0, -0.02, 0]}>
-          <cylinderGeometry args={[0.015, 0.006, 0.12, 6]} />
-          <meshStandardMaterial
-            color={ACCENT} emissive={ACCENT} emissiveIntensity={1.5}
-            transparent opacity={0.30} toneMapped={false}
-          />
-        </mesh>
-
-        {/* Base glow ring */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-          <ringGeometry args={[0.50, 0.65, 32]} />
-          <meshStandardMaterial
-            color={ACCENT} emissive={ACCENT} emissiveIntensity={1.5}
-            transparent opacity={0.12} toneMapped={false} side={THREE.DoubleSide}
-          />
-        </mesh>
-
         {/* Invisible click target */}
         <mesh onClick={handleClick}
           onPointerOver={() => setHovered(true)}
@@ -987,7 +774,9 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
       <CampusLighting />
       <CampusCamera origin={origin} destination={destination} onTransitionDone={onTransitionDone} />
       <CampusGrid />
-      <CampusWireframe />
+      <Suspense fallback={null}>
+        <SatelliteBase />
+      </Suspense>
       <RouteLine origin={origin} destination={destination} />
       {LANDMARKS.map(lm => (
         <CampusBuilding
