@@ -321,20 +321,20 @@ function GeiselModel() {
 
 const MAP_W = 34, MAP_H = 19.7
 const METERS_PER_UNIT = 60
-const GEISEL_SCALE = 0.08
+const GEISEL_SCALE = 0.12
 
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x: -4.8,  z: -0.4,  w: 0, d: 0, h: 0, isGeisel: true },
-  { id: 'price',    name: 'Price Center',       x: -6.2,  z:  0.6,  w: 2.2, d: 1.6, h: 0.35 },
-  { id: 'sixth',    name: 'Sixth College',      x: -4.2,  z:  7.5,  w: 1.8, d: 1.8, h: 0.30 },
-  { id: 'seventh',  name: 'Seventh College',    x: 11.1,  z:  6.3,  w: 1.8, d: 1.4, h: 0.30 },
-  { id: 'eighth',   name: 'Eighth College',     x: -6.8,  z:  7.0,  w: 1.6, d: 1.4, h: 0.30 },
-  { id: 'rimac',    name: 'RIMAC',              x: -0.3,  z:  8.2,  w: 2.5, d: 1.8, h: 0.45 },
-  { id: 'revelle',  name: 'Revelle College',    x: -9.7,  z: -4.1,  w: 1.8, d: 1.8, h: 0.30 },
-  { id: 'muir',     name: 'Muir College',       x: -7.4,  z:  2.4,  w: 1.8, d: 1.4, h: 0.30 },
-  { id: 'marshall', name: 'Marshall College',    x:  7.2,  z: -5.7,  w: 1.8, d: 1.6, h: 0.30 },
-  { id: 'erc',      name: 'ERC',                x:-13.9,  z:  6.0,  w: 1.8, d: 1.4, h: 0.30 },
-  { id: 'warren',   name: 'Warren College',     x:  6.1,  z:  3.3,  w: 1.8, d: 1.4, h: 0.30 },
+  { id: 'price',    name: 'Price Center',       x: -6.2,  z:  0.6,  w: 2.4, d: 1.6, h: 0.55 },
+  { id: 'sixth',    name: 'Sixth College',      x: -4.2,  z:  7.5,  w: 1.8, d: 1.5, h: 0.45 },
+  { id: 'seventh',  name: 'Seventh College',    x: 11.1,  z:  6.3,  w: 1.8, d: 1.3, h: 0.42 },
+  { id: 'eighth',   name: 'Eighth College',     x: -6.8,  z:  7.0,  w: 1.5, d: 1.3, h: 0.40 },
+  { id: 'rimac',    name: 'RIMAC',              x: -0.3,  z:  8.2,  w: 2.8, d: 1.8, h: 0.65 },
+  { id: 'revelle',  name: 'Revelle College',    x: -9.7,  z: -4.1,  w: 1.8, d: 1.5, h: 0.45 },
+  { id: 'muir',     name: 'Muir College',       x: -7.4,  z:  2.4,  w: 1.6, d: 1.3, h: 0.40 },
+  { id: 'marshall', name: 'Marshall College',    x:  7.2,  z: -5.7,  w: 1.8, d: 1.5, h: 0.45 },
+  { id: 'erc',      name: 'ERC',                x:-13.9,  z:  6.0,  w: 1.8, d: 1.3, h: 0.42 },
+  { id: 'warren',   name: 'Warren College',     x:  6.1,  z:  3.3,  w: 1.8, d: 1.3, h: 0.42 },
   { id: 'libwalk',  name: 'Library Walk',       x: -3.7,  z:  0.1,  w: 0.15, d: 4, h: 0.02 },
 ]
 
@@ -447,62 +447,59 @@ function CampusGrid() {
 
 function CampusBuilding({ landmark, selected, onSelect }) {
   const { id, x, z, w, d, h, isGeisel, name } = landmark
-  const groupRef = useRef()
   const [hovered, setHovered] = useState(false)
-  const bobOffset = useMemo(() => x * 1.7 + z * 0.9, [x, z])
-
-  useFrame(({ clock }) => {
-    if (groupRef.current && !isGeisel) {
-      groupRef.current.position.y = h / 2 + 0.06 + Math.sin(clock.elapsedTime * 1.2 + bobOffset) * 0.015
-    }
-  })
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
     onSelect(id)
   }, [onSelect, id])
 
+  const floors = useMemo(() => {
+    if (h < 0.1) return []
+    const count = Math.max(2, Math.floor(h / 0.13))
+    const arr = []
+    for (let i = 1; i <= count; i++) arr.push(-h / 2 + i * (h / (count + 1)))
+    return arr
+  }, [h])
+
   if (isGeisel) {
     return (
-      <group position={[x, 0.06, z]}>
+      <group position={[x, 0.03, z]}>
         <group scale={[GEISEL_SCALE, GEISEL_SCALE, GEISEL_SCALE]}>
           <GeiselModel />
         </group>
-        {/* Invisible click target */}
         <mesh onClick={handleClick}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
         >
-          <cylinderGeometry args={[1, 1, 1.2, 8]} />
+          <cylinderGeometry args={[0.7, 0.7, 0.8, 8]} />
           <meshStandardMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
         {selected && (
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-            <ringGeometry args={[0.9, 1.05, 32]} />
+            <ringGeometry args={[0.65, 0.78, 32]} />
             <meshStandardMaterial
               color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
               transparent opacity={0.45} toneMapped={false} side={THREE.DoubleSide}
             />
           </mesh>
         )}
-        {/* Vertical beam */}
-        <mesh position={[0, 0.95, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 0.7, 4]} />
+        <mesh position={[0, 0.75, 0]}>
+          <cylinderGeometry args={[0.01, 0.01, 0.5, 4]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
             transparent opacity={selected ? 0.5 : 0.2} toneMapped={false}
           />
         </mesh>
-        {/* Marker sphere */}
-        <mesh position={[0, 1.35, 0]}>
-          <sphereGeometry args={[0.07, 8, 8]} />
+        <mesh position={[0, 1.05, 0]}>
+          <sphereGeometry args={[0.06, 8, 8]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT}
             emissiveIntensity={selected ? 3 : 1.5} toneMapped={false}
           />
         </mesh>
-        <pointLight position={[0, 1.35, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={3} />
-        <Html center position={[0, 1.65, 0]} style={{ pointerEvents: 'none' }}>
+        <pointLight position={[0, 1.05, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={3} />
+        <Html center position={[0, 1.30, 0]} style={{ pointerEvents: 'none' }}>
           <div style={{
             color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
@@ -536,10 +533,20 @@ function CampusBuilding({ landmark, selected, onSelect }) {
   }
 
   const ringR = Math.max(w, d) * 0.65
+  const edgeOp = selected ? 0.5 : hovered ? 0.35 : 0.25
 
   return (
-    <group ref={groupRef} position={[x, h / 2 + 0.06, z]}>
-      {/* Solid fill */}
+    <group position={[x, h / 2 + 0.03, z]}>
+      {/* Base platform slab */}
+      <mesh position={[0, -h / 2 - 0.01, 0]}>
+        <boxGeometry args={[w + 0.08, 0.02, d + 0.08]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
+          transparent opacity={0.10} toneMapped={false}
+        />
+      </mesh>
+
+      {/* Main body — transparent fill (click target) */}
       <mesh onClick={handleClick}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
@@ -547,17 +554,76 @@ function CampusBuilding({ landmark, selected, onSelect }) {
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial
           color={ACCENT} transparent
-          opacity={selected ? 0.14 : hovered ? 0.08 : 0.04}
+          opacity={selected ? 0.12 : hovered ? 0.07 : 0.03}
           metalness={0.85} roughness={0.15}
         />
       </mesh>
-      {/* Wireframe */}
+
+      {/* Wireframe overlay */}
       <mesh>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial
           color={ACCENT} wireframe transparent
-          opacity={selected ? 0.7 : hovered ? 0.45 : 0.25}
+          opacity={selected ? 0.55 : hovered ? 0.35 : 0.18}
         />
+      </mesh>
+
+      {/* Interior floor lines */}
+      {floors.map((fy, fi) => (
+        <mesh key={`fl-${fi}`} position={[0, fy, 0]}>
+          <boxGeometry args={[w * 0.90, 0.005, d * 0.90]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT} emissiveIntensity={0.6}
+            transparent opacity={0.08} toneMapped={false}
+          />
+        </mesh>
+      ))}
+
+      {/* Vertical corner edge glow */}
+      {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], i) => (
+        <mesh key={`ce-${i}`} position={[sx * w / 2, 0, sz * d / 2]}>
+          <boxGeometry args={[0.022, h, 0.022]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT} emissiveIntensity={1.3}
+            transparent opacity={edgeOp} toneMapped={false}
+          />
+        </mesh>
+      ))}
+
+      {/* Top horizontal edge glow (4 edges) */}
+      <mesh position={[0, h / 2, -d / 2]}>
+        <boxGeometry args={[w, 0.016, 0.016]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, h / 2, d / 2]}>
+        <boxGeometry args={[w, 0.016, 0.016]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+      </mesh>
+      <mesh position={[-w / 2, h / 2, 0]}>
+        <boxGeometry args={[0.016, 0.016, d]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+      </mesh>
+      <mesh position={[w / 2, h / 2, 0]}>
+        <boxGeometry args={[0.016, 0.016, d]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
+      </mesh>
+
+      {/* Bottom horizontal edge glow (4 edges) */}
+      <mesh position={[0, -h / 2, -d / 2]}>
+        <boxGeometry args={[w, 0.016, 0.016]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -h / 2, d / 2]}>
+        <boxGeometry args={[w, 0.016, 0.016]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
+      </mesh>
+      <mesh position={[-w / 2, -h / 2, 0]}>
+        <boxGeometry args={[0.016, 0.016, d]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
+      </mesh>
+      <mesh position={[w / 2, -h / 2, 0]}>
+        <boxGeometry args={[0.016, 0.016, d]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8} transparent opacity={edgeOp * 0.6} toneMapped={false} />
       </mesh>
 
       {/* Selection ring */}
@@ -571,9 +637,9 @@ function CampusBuilding({ landmark, selected, onSelect }) {
         </mesh>
       )}
 
-      {/* Vertical beam */}
+      {/* Vertical marker beam */}
       <mesh position={[0, h / 2 + 0.3, 0]}>
-        <cylinderGeometry args={[0.012, 0.012, 0.6, 4]} />
+        <cylinderGeometry args={[0.01, 0.01, 0.6, 4]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
           transparent opacity={selected ? 0.5 : 0.2} toneMapped={false}
@@ -581,7 +647,7 @@ function CampusBuilding({ landmark, selected, onSelect }) {
       </mesh>
       {/* Marker sphere */}
       <mesh position={[0, h / 2 + 0.65, 0]}>
-        <sphereGeometry args={[0.055, 8, 8]} />
+        <sphereGeometry args={[0.05, 8, 8]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT}
           emissiveIntensity={selected ? 3 : 1.5} toneMapped={false}
