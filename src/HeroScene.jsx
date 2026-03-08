@@ -435,16 +435,17 @@ function SatelliteBase() {
         />
       </mesh>
 
-      {/* Primary satellite map — bright holographic material */}
+      {/* Primary satellite map — detail preserved, glow from emissiveMap */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
         <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
         <meshStandardMaterial
           map={texture}
-          color="#ff5050"
-          transparent
-          opacity={0.58}
+          color="#3a3a3a"
           emissive={ACCENT}
-          emissiveIntensity={1.4}
+          emissiveMap={texture}
+          emissiveIntensity={1.3}
+          transparent
+          opacity={0.52}
           toneMapped={false}
         />
       </mesh>
