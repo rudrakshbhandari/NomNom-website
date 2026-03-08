@@ -949,7 +949,7 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
       const curLook = targetLook.current.clone()
       startLook.current.copy(curLook)
       const a = angle.current
-      targetPos.current.set(Math.sin(a) * 34, 24, Math.cos(a) * 34)
+      targetPos.current.set(Math.sin(a) * 22, 14, Math.cos(a) * 22)
       targetLook.current.set(0, 0, 0)
     }
 
@@ -983,9 +983,9 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
 
     angle.current += 0.0012
     camera.position.set(
-      Math.sin(angle.current) * 34,
-      24,
-      Math.cos(angle.current) * 34
+      Math.sin(angle.current) * 22,
+      14,
+      Math.cos(angle.current) * 22
     )
     camera.lookAt(0, 0, 0)
   })
@@ -1293,7 +1293,7 @@ export default function HeroScene() {
         <div style={{ position: 'absolute', inset: 0 }}>
           <Canvas
             dpr={[1, 1.5]}
-            camera={{ position: [0, 24, 34], fov: 48, near: 0.1, far: 200 }}
+            camera={{ position: [0, 14, 22], fov: 38, near: 0.1, far: 200 }}
             style={{ width: '100%', height: '100%' }}
           >
             <CampusSceneContent
