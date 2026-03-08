@@ -3,7 +3,7 @@ import {
   Suspense, Component,
 } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Html, useTexture } from '@react-three/drei'
+import { useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════════
@@ -321,149 +321,127 @@ function GeiselModel() {
 }
 
 /* ═══════════════════════════════════════════════
-   Campus layout — UCSD campus map (1024×1024)
-   Plane 28×28, offset so Geisel sits at world origin
-   Geisel is at image fraction (0.34, 0.57)
+   Campus landmarks — approximate UCSD positions
+   1 unit ≈ 50 meters
    ═══════════════════════════════════════════════ */
 
-const METERS_PER_UNIT = 50
+const MAP_W = 34, MAP_H = 19.7
+const METERS_PER_UNIT = 60
 const GEISEL_SCALE = 0.15
-const CAMPUS_W = 28
-const CAMPUS_H = 28
-const PLANE_OX = 4.5
-const PLANE_OZ = -2.0
 
 const LANDMARKS = [
-  { id: 'geisel',   name: 'Geisel Library',    x:  0.0,  z:  0.0,  w: 0, d: 0, h: 0, isGeisel: true },
-  { id: 'price',    name: 'Price Center',       x:  2.0,  z:  1.7,  w: 1.4, d: 1.0, h: 0.28 },
-  { id: 'sixth',    name: 'Sixth College',      x:  3.6,  z:  3.9,  w: 1.3, d: 1.3, h: 0.25 },
-  { id: 'seventh',  name: 'Seventh College',    x:  5.0,  z: -4.2,  w: 1.3, d: 1.0, h: 0.25 },
-  { id: 'eighth',   name: 'Eighth College',     x: -2.0,  z: -7.0,  w: 1.2, d: 1.2, h: 0.25 },
-  { id: 'rimac',    name: 'RIMAC',              x:  0.3,  z: -5.9,  w: 1.6, d: 1.2, h: 0.32 },
-  { id: 'revelle',  name: 'Revelle College',    x: -4.5,  z:  8.4,  w: 1.3, d: 1.3, h: 0.25 },
-  { id: 'muir',     name: 'Muir College',       x: -6.7,  z:  4.5,  w: 1.3, d: 1.0, h: 0.25 },
-  { id: 'marshall', name: 'Marshall College',    x: -4.2,  z: -1.1,  w: 1.3, d: 1.0, h: 0.25 },
-  { id: 'erc',      name: 'ERC',                x: -5.9,  z: -5.9,  w: 1.2, d: 1.0, h: 0.25 },
-  { id: 'warren',   name: 'Warren College',     x:  2.0,  z: -2.0,  w: 1.3, d: 1.0, h: 0.25 },
-  { id: 'libwalk',  name: 'Library Walk',       x:  0.3,  z:  0.8,  w: 0.10, d: 3.5, h: 0.015 },
+  { id: 'geisel',   name: 'Geisel Library',    x: -4.8,  z: -0.4,  w: 0, d: 0, h: 0, isGeisel: true },
+  { id: 'price',    name: 'Price Center',       x: -6.2,  z:  0.6,  w: 2.2, d: 1.6, h: 0.35 },
+  { id: 'sixth',    name: 'Sixth College',      x: -4.2,  z:  7.5,  w: 1.8, d: 1.8, h: 0.30 },
+  { id: 'seventh',  name: 'Seventh College',    x: 11.1,  z:  6.3,  w: 1.8, d: 1.4, h: 0.30 },
+  { id: 'eighth',   name: 'Eighth College',     x: -6.8,  z:  7.0,  w: 1.6, d: 1.4, h: 0.30 },
+  { id: 'rimac',    name: 'RIMAC',              x: -0.3,  z:  8.2,  w: 2.5, d: 1.8, h: 0.45 },
+  { id: 'revelle',  name: 'Revelle College',    x: -9.7,  z: -4.1,  w: 1.8, d: 1.8, h: 0.30 },
+  { id: 'muir',     name: 'Muir College',       x: -7.4,  z:  2.4,  w: 1.8, d: 1.4, h: 0.30 },
+  { id: 'marshall', name: 'Marshall College',    x:  7.2,  z: -5.7,  w: 1.8, d: 1.6, h: 0.30 },
+  { id: 'erc',      name: 'ERC',                x:-13.9,  z:  6.0,  w: 1.8, d: 1.4, h: 0.30 },
+  { id: 'warren',   name: 'Warren College',     x:  6.1,  z:  3.3,  w: 1.8, d: 1.4, h: 0.30 },
+  { id: 'libwalk',  name: 'Library Walk',       x: -3.7,  z:  0.1,  w: 0.15, d: 4, h: 0.02 },
 ]
 
 /* ═══════════════════════════════════════════════
-   Holographic grid — underneath the satellite plane
+   Holographic campus grid
    ═══════════════════════════════════════════════ */
 
 function CampusGrid() {
-  const gridHalf = CAMPUS_W / 2 + 6
+  const campusTex = useMemo(() => {
+    const tex = new THREE.TextureLoader().load('/campus-aerial.png')
+    tex.colorSpace = THREE.SRGBColorSpace
+    return tex
+  }, [])
+
+  const scanTex = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 4
+    canvas.height = 512
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, 4, 512)
+    for (let y = 0; y < 512; y += 3) {
+      ctx.fillStyle = 'rgba(0,0,0,0.09)'
+      ctx.fillRect(0, y, 4, 1)
+    }
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(1, 50)
+    return tex
+  }, [])
 
   const gridGeo = useMemo(() => {
     const pts = []
-    const colors = []
-    const c = new THREE.Color(ACCENT)
-    for (let x = -gridHalf; x <= gridHalf; x += 1) {
-      const fade = 1 - Math.abs(x) / gridHalf
-      pts.push(x, 0, -gridHalf, x, 0, gridHalf)
-      colors.push(c.r, c.g, c.b, fade * 0.3, c.r, c.g, c.b, fade * 0.3)
-    }
-    for (let z = -gridHalf; z <= gridHalf; z += 1) {
-      const fade = 1 - Math.abs(z) / gridHalf
-      pts.push(-gridHalf, 0, z, gridHalf, 0, z)
-      colors.push(c.r, c.g, c.b, fade * 0.3, c.r, c.g, c.b, fade * 0.3)
+    const half = 21
+    for (let i = -half; i <= half; i++) {
+      pts.push(-half, 0, i, half, 0, i)
+      pts.push(i, 0, -half, i, 0, half)
     }
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
-    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4))
+    return g
+  }, [])
+
+  const borderGeo = useMemo(() => {
+    const hw = MAP_W / 2, hh = MAP_H / 2
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.Float32BufferAttribute([
+      -hw, 0.02, -hh,  hw, 0.02, -hh,
+       hw, 0.02, -hh,  hw, 0.02,  hh,
+       hw, 0.02,  hh, -hw, 0.02,  hh,
+      -hw, 0.02,  hh, -hw, 0.02, -hh,
+    ], 3))
     return g
   }, [])
 
   return (
     <group>
+      {/* Background grid — slightly larger than map */}
       <lineSegments geometry={gridGeo}>
-        <lineBasicMaterial vertexColors transparent opacity={0.10} />
+        <lineBasicMaterial color={ACCENT} transparent opacity={0.05} />
       </lineSegments>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
-        <ringGeometry args={[gridHalf - 0.5, gridHalf, 64]} />
+      {/* Satellite image plane — red-tinted holographic projection */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <planeGeometry args={[MAP_W, MAP_H]} />
         <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
-          transparent opacity={0.08} toneMapped={false} side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
-        <planeGeometry args={[gridHalf * 2 + 4, gridHalf * 2 + 4]} />
-        <meshStandardMaterial color="#010103" metalness={0.95} roughness={0.4} />
-      </mesh>
-    </group>
-  )
-}
-
-/* ═══════════════════════════════════════════════
-   Satellite map hologram — Geisel-matched glow
-   ═══════════════════════════════════════════════ */
-
-function SatelliteBase() {
-  const texture = useTexture('/campus-map.png')
-
-  const scanlineTex = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 4
-    canvas.height = 8
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, 4, 8)
-    ctx.fillStyle = 'rgba(0,0,0,0.22)'
-    ctx.fillRect(0, 0, 4, 1)
-    const tex = new THREE.CanvasTexture(canvas)
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    tex.repeat.set(CAMPUS_W * 2, CAMPUS_H * 2)
-    return tex
-  }, [])
-
-  const diag = CAMPUS_W * Math.SQRT2 / 2
-
-  return (
-    <group position={[PLANE_OX, 0, PLANE_OZ]}>
-      {/* Glow halo underneath */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-        <planeGeometry args={[CAMPUS_W + 1.5, CAMPUS_H + 1.5]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.7}
-          transparent opacity={0.05} toneMapped={false} side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Campus map — detail visible, red holographic glow through features */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
-        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
-        <meshStandardMaterial
-          map={texture}
-          color="#303030"
-          emissive={ACCENT}
-          emissiveMap={texture}
-          emissiveIntensity={1.1}
-          transparent
-          opacity={0.48}
-          toneMapped={false}
+          map={campusTex}
+          color="#ff4444"
+          transparent opacity={0.38}
+          emissive="#ff1515"
+          emissiveIntensity={0.03}
         />
       </mesh>
 
       {/* Scanline overlay */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.018, 0]}>
-        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]}>
+        <planeGeometry args={[MAP_W, MAP_H]} />
         <meshBasicMaterial
-          map={scanlineTex}
-          transparent
-          opacity={0.10}
+          map={scanTex}
+          transparent opacity={0.12}
           depthWrite={false}
         />
       </mesh>
 
-      {/* Edge glow border */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.016, 0]}>
-        <ringGeometry args={[diag - 0.3, diag + 0.1, 64]} />
+      {/* Map border glow */}
+      <lineSegments geometry={borderGeo}>
+        <lineBasicMaterial color={ACCENT} transparent opacity={0.30} />
+      </lineSegments>
+
+      {/* Outer glow band around the map edge */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+        <planeGeometry args={[MAP_W + 1.5, MAP_H + 1.5]} />
         <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8}
-          transparent opacity={0.10} toneMapped={false} side={THREE.DoubleSide}
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.25}
+          transparent opacity={0.04} toneMapped={false}
         />
+      </mesh>
+
+      {/* Dark ground plane */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <circleGeometry args={[28, 64]} />
+        <meshStandardMaterial color="#020204" metalness={0.95} roughness={0.4} />
       </mesh>
     </group>
   )
@@ -642,7 +620,7 @@ function RouteLine({ origin, destination }) {
     if (!o || !d) return null
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute([
-      o.x, 0.06, o.z, d.x, 0.06, d.z,
+      o.x, 0.04, o.z, d.x, 0.04, d.z,
     ], 3))
     return g
   }, [origin, destination])
@@ -703,7 +681,7 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
       const curLook = targetLook.current.clone()
       startLook.current.copy(curLook)
       const a = angle.current
-      targetPos.current.set(Math.sin(a) * 32, 26, Math.cos(a) * 32)
+      targetPos.current.set(Math.sin(a) * 34, 24, Math.cos(a) * 34)
       targetLook.current.set(0, 0, 0)
     }
 
@@ -735,11 +713,11 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
       return
     }
 
-    angle.current += 0.0010
+    angle.current += 0.0012
     camera.position.set(
-      Math.sin(angle.current) * 32,
-      26,
-      Math.cos(angle.current) * 32
+      Math.sin(angle.current) * 34,
+      24,
+      Math.cos(angle.current) * 34
     )
     camera.lookAt(0, 0, 0)
   })
@@ -770,13 +748,10 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
   return (
     <>
       <color attach="background" args={['#000000']} />
-      <fog attach="fog" args={['#000000', 35, 65]} />
+      <fog attach="fog" args={['#000000', 38, 65]} />
       <CampusLighting />
       <CampusCamera origin={origin} destination={destination} onTransitionDone={onTransitionDone} />
       <CampusGrid />
-      <Suspense fallback={null}>
-        <SatelliteBase />
-      </Suspense>
       <RouteLine origin={origin} destination={destination} />
       {LANDMARKS.map(lm => (
         <CampusBuilding
@@ -1008,7 +983,7 @@ export default function HeroScene() {
         <div style={{ position: 'absolute', inset: 0 }}>
           <Canvas
             dpr={[1, 1.5]}
-            camera={{ position: [0, 26, 32], fov: 42, near: 0.1, far: 200 }}
+            camera={{ position: [0, 24, 34], fov: 48, near: 0.1, far: 200 }}
             style={{ width: '100%', height: '100%' }}
           >
             <CampusSceneContent
