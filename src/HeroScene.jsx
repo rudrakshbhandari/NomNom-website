@@ -339,12 +339,15 @@ const LANDMARKS = [
 ]
 
 const DINING_HALLS = [
-  { id: 'dh-64deg',   name: '64 Degrees',       x: -5.0,  z:  7.0 },
-  { id: 'dh-pines',   name: 'Pines',            x: -7.0,  z:  2.0 },
-  { id: 'dh-canyon',   name: 'Canyon Vista',     x:  0.5,  z: -2.0 },
-  { id: 'dh-sixth',   name: 'Sixth Dining',     x:  2.5,  z:  2.0 },
-  { id: 'dh-ocean',   name: 'OceanView',        x:  0.0,  z:  1.5 },
-  { id: 'dh-bistro',  name: 'Bistro',           x: -7.0,  z: -2.5 },
+  { id: 'dh-64deg',   name: '64 Degrees',    x:  6.70,  z:  7.43,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-pines',   name: 'Pines',         x:  1.44,  z:  7.81,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-roots',   name: 'Roots',         x:  0.36,  z:  8.53,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-goodys',  name: "Goody's",       x: -5.56,  z:  4.54,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-ventanas', name: 'Ventanas',     x:-11.51,  z:  8.79,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-concessions', name: 'Concessions', x:-11.29, z:  2.59,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-bistro',  name: 'Bistro',        x:-15.68,  z:  6.73,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-canyon',  name: 'Canyon Vista',  x: -7.56,  z: -4.95,  w: 0.9, d: 0.7, h: 0.45 },
+  { id: 'dh-price',   name: 'Price Center Dining', x: -0.19, z: -0.20, w: 0.9, d: 0.7, h: 0.45 },
 ]
 
 const ALL_LOCATIONS = [...LANDMARKS, ...DINING_HALLS]
@@ -679,13 +682,13 @@ function CampusBuilding({ landmark, selected, onSelect }) {
 }
 
 /* ═══════════════════════════════════════════════
-   Dining hall marker — white holographic pillar
+   Dining hall — small white 3D building cluster
    ═══════════════════════════════════════════════ */
 
 const DH_COLOR = '#ffffff'
 
 function DiningHallMarker({ hall, selected, onSelect }) {
-  const { id, x, z, name } = hall
+  const { id, x, z, name, w = 0.9, d = 0.7, h = 0.45 } = hall
   const [hovered, setHovered] = useState(false)
 
   const handleClick = useCallback((e) => {
@@ -693,33 +696,95 @@ function DiningHallMarker({ hall, selected, onSelect }) {
     onSelect(id)
   }, [onSelect, id])
 
-  const beamOp = selected ? 0.50 : hovered ? 0.30 : 0.15
-  const sphereGlow = selected ? 3 : hovered ? 2 : 1.2
+  const cluster = useMemo(() => {
+    const rng = seededRng(id)
+    const count = 2 + Math.floor(rng() * 2)
+    const items = []
+    for (let i = 0; i < count; i++) {
+      const bw = w * (0.25 + rng() * 0.35)
+      const bd = d * (0.25 + rng() * 0.35)
+      const bh = h * (0.7 + rng() * 0.6)
+      const ox = (rng() - 0.5) * (w - bw) * 0.9
+      const oz = (rng() - 0.5) * (d - bd) * 0.9
+      items.push({ w: bw, d: bd, h: bh, ox, oz })
+    }
+    items.sort((a, b) => b.h - a.h)
+    return items
+  }, [id, w, d, h])
+
+  const tallest = cluster.length > 0 ? cluster[0].h : h
+  const ringR = Math.max(w, d) * 0.55
+  const wfOp = selected ? 0.55 : hovered ? 0.40 : 0.28
+  const fillOp = selected ? 0.12 : hovered ? 0.08 : 0.04
+  const edgeOp = selected ? 0.50 : hovered ? 0.38 : 0.30
 
   return (
     <group position={[x, 0.03, z]}>
-      {/* Click target */}
-      <mesh position={[0, 0.2, 0]}
+      <mesh position={[0, tallest / 2, 0]}
         onClick={handleClick}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <cylinderGeometry args={[0.3, 0.3, 0.5, 8]} />
+        <boxGeometry args={[w, tallest, d]} />
         <meshStandardMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Base glow disc */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <circleGeometry args={[0.2, 16]} />
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[w + 0.04, 0.012, d + 0.04]} />
         <meshStandardMaterial
-          color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={0.8}
-          transparent opacity={selected ? 0.25 : 0.10} toneMapped={false} side={THREE.DoubleSide}
+          color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={0.5}
+          transparent opacity={0.08} toneMapped={false}
         />
       </mesh>
 
+      {cluster.map((b, bi) => (
+        <group key={`b-${bi}`} position={[b.ox, b.h / 2, b.oz]}>
+          <mesh>
+            <boxGeometry args={[b.w, b.h, b.d]} />
+            <meshStandardMaterial
+              color={DH_COLOR} transparent opacity={fillOp}
+              metalness={0.85} roughness={0.15}
+            />
+          </mesh>
+          <mesh>
+            <boxGeometry args={[b.w, b.h, b.d]} />
+            <meshStandardMaterial color={DH_COLOR} wireframe transparent opacity={wfOp} />
+          </mesh>
+          {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], ci) => (
+            <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]}>
+              <boxGeometry args={[0.018, b.h, 0.018]} />
+              <meshStandardMaterial
+                color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1.5}
+                transparent opacity={edgeOp} toneMapped={false}
+              />
+            </mesh>
+          ))}
+          {bi === 0 && (
+            <>
+              <mesh position={[0, b.h / 2, -b.d / 2]}>
+                <boxGeometry args={[b.w, 0.012, 0.012]} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+              <mesh position={[0, b.h / 2, b.d / 2]}>
+                <boxGeometry args={[b.w, 0.012, 0.012]} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+              <mesh position={[-b.w / 2, b.h / 2, 0]}>
+                <boxGeometry args={[0.012, 0.012, b.d]} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+              <mesh position={[b.w / 2, b.h / 2, 0]}>
+                <boxGeometry args={[0.012, 0.012, b.d]} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
+              </mesh>
+            </>
+          )}
+        </group>
+      ))}
+
       {selected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-          <ringGeometry args={[0.3, 0.42, 24]} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+          <ringGeometry args={[ringR, ringR + 0.1, 32]} />
           <meshStandardMaterial
             color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={2}
             transparent opacity={0.40} toneMapped={false} side={THREE.DoubleSide}
@@ -727,27 +792,23 @@ function DiningHallMarker({ hall, selected, onSelect }) {
         </mesh>
       )}
 
-      {/* Vertical beam — shorter than landmark pillars */}
-      <mesh position={[0, 0.22, 0]}>
+      <mesh position={[0, tallest + 0.2, 0]}>
         <cylinderGeometry args={[0.008, 0.008, 0.4, 4]} />
         <meshStandardMaterial
           color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1}
-          transparent opacity={beamOp} toneMapped={false}
+          transparent opacity={selected ? 0.45 : 0.18} toneMapped={false}
         />
       </mesh>
-
-      {/* Marker sphere */}
-      <mesh position={[0, 0.45, 0]}>
+      <mesh position={[0, tallest + 0.45, 0]}>
         <sphereGeometry args={[0.04, 8, 8]} />
         <meshStandardMaterial
           color={DH_COLOR} emissive={DH_COLOR}
-          emissiveIntensity={sphereGlow} toneMapped={false}
+          emissiveIntensity={selected ? 2.5 : 1.2} toneMapped={false}
         />
       </mesh>
-      <pointLight position={[0, 0.45, 0]} color={DH_COLOR} intensity={selected ? 0.5 : 0.1} distance={2} />
+      <pointLight position={[0, tallest + 0.45, 0]} color={DH_COLOR} intensity={selected ? 0.5 : 0.1} distance={2} />
 
-      {/* Label */}
-      <Html center position={[0, 0.65, 0]} style={{ pointerEvents: 'none' }}>
+      <Html center position={[0, tallest + 0.7, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{
           color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
           fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
