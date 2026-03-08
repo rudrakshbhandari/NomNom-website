@@ -321,29 +321,31 @@ function GeiselModel() {
 }
 
 /* ═══════════════════════════════════════════════
-   Campus layout — satellite image–anchored
-   Image: 1024×594 → plane 34×20 units
-   Positions mapped from pixel locations on aerial photo
+   Campus layout — UCSD campus map (1024×1024)
+   Plane 28×28, offset so Geisel sits at world origin
+   Geisel is at image fraction (0.34, 0.57)
    ═══════════════════════════════════════════════ */
 
 const METERS_PER_UNIT = 50
 const GEISEL_SCALE = 0.15
-const CAMPUS_W = 34
-const CAMPUS_H = 20
+const CAMPUS_W = 28
+const CAMPUS_H = 28
+const PLANE_OX = 4.5
+const PLANE_OZ = -2.0
 
 const LANDMARKS = [
-  { id: 'geisel',   name: 'Geisel Library',    x: -3.1,  z:  0.4,  w: 0, d: 0, h: 0, isGeisel: true },
-  { id: 'price',    name: 'Price Center',       x:  3.9,  z: -2.6,  w: 1.6, d: 1.2, h: 0.30 },
-  { id: 'sixth',    name: 'Sixth College',      x: -4.7,  z: -7.0,  w: 1.4, d: 1.4, h: 0.28 },
-  { id: 'seventh',  name: 'Seventh College',    x: 10.9,  z: -6.5,  w: 1.4, d: 1.1, h: 0.25 },
-  { id: 'eighth',   name: 'Eighth College',     x:-14.0,  z: -5.6,  w: 1.3, d: 1.3, h: 0.25 },
-  { id: 'rimac',    name: 'RIMAC',              x:  8.9,  z: -1.1,  w: 1.8, d: 1.3, h: 0.35 },
-  { id: 'revelle',  name: 'Revelle College',    x:  3.3,  z: -6.5,  w: 1.4, d: 1.4, h: 0.28 },
-  { id: 'muir',     name: 'Muir College',       x:-13.0,  z: -1.6,  w: 1.4, d: 1.1, h: 0.25 },
-  { id: 'marshall', name: 'Marshall College',    x:  6.9,  z:  6.3,  w: 1.4, d: 1.2, h: 0.28 },
-  { id: 'erc',      name: 'ERC',                x:  0.6,  z: -6.5,  w: 1.3, d: 1.1, h: 0.25 },
-  { id: 'warren',   name: 'Warren College',     x: -5.7,  z: -2.3,  w: 1.4, d: 1.1, h: 0.25 },
-  { id: 'libwalk',  name: 'Library Walk',       x: -2.1,  z:  1.4,  w: 0.10, d: 4, h: 0.015 },
+  { id: 'geisel',   name: 'Geisel Library',    x:  0.0,  z:  0.0,  w: 0, d: 0, h: 0, isGeisel: true },
+  { id: 'price',    name: 'Price Center',       x:  2.0,  z:  1.7,  w: 1.4, d: 1.0, h: 0.28 },
+  { id: 'sixth',    name: 'Sixth College',      x:  3.6,  z:  3.9,  w: 1.3, d: 1.3, h: 0.25 },
+  { id: 'seventh',  name: 'Seventh College',    x:  5.0,  z: -4.2,  w: 1.3, d: 1.0, h: 0.25 },
+  { id: 'eighth',   name: 'Eighth College',     x: -2.0,  z: -7.0,  w: 1.2, d: 1.2, h: 0.25 },
+  { id: 'rimac',    name: 'RIMAC',              x:  0.3,  z: -5.9,  w: 1.6, d: 1.2, h: 0.32 },
+  { id: 'revelle',  name: 'Revelle College',    x: -4.5,  z:  8.4,  w: 1.3, d: 1.3, h: 0.25 },
+  { id: 'muir',     name: 'Muir College',       x: -6.7,  z:  4.5,  w: 1.3, d: 1.0, h: 0.25 },
+  { id: 'marshall', name: 'Marshall College',    x: -4.2,  z: -1.1,  w: 1.3, d: 1.0, h: 0.25 },
+  { id: 'erc',      name: 'ERC',                x: -5.9,  z: -5.9,  w: 1.2, d: 1.0, h: 0.25 },
+  { id: 'warren',   name: 'Warren College',     x:  2.0,  z: -2.0,  w: 1.3, d: 1.0, h: 0.25 },
+  { id: 'libwalk',  name: 'Library Walk',       x:  0.3,  z:  0.8,  w: 0.10, d: 3.5, h: 0.015 },
 ]
 
 /* ═══════════════════════════════════════════════
@@ -351,22 +353,21 @@ const LANDMARKS = [
    ═══════════════════════════════════════════════ */
 
 function CampusGrid() {
-  const gridHalfW = CAMPUS_W / 2 + 2
-  const gridHalfH = CAMPUS_H / 2 + 2
+  const gridHalf = CAMPUS_W / 2 + 6
 
   const gridGeo = useMemo(() => {
     const pts = []
     const colors = []
     const c = new THREE.Color(ACCENT)
-    for (let x = -gridHalfW; x <= gridHalfW; x += 1) {
-      const fadeX = 1 - Math.abs(x) / gridHalfW
-      pts.push(x, 0, -gridHalfH, x, 0, gridHalfH)
-      colors.push(c.r, c.g, c.b, fadeX * 0.3, c.r, c.g, c.b, fadeX * 0.3)
+    for (let x = -gridHalf; x <= gridHalf; x += 1) {
+      const fade = 1 - Math.abs(x) / gridHalf
+      pts.push(x, 0, -gridHalf, x, 0, gridHalf)
+      colors.push(c.r, c.g, c.b, fade * 0.3, c.r, c.g, c.b, fade * 0.3)
     }
-    for (let z = -gridHalfH; z <= gridHalfH; z += 1) {
-      const fadeZ = 1 - Math.abs(z) / gridHalfH
-      pts.push(-gridHalfW, 0, z, gridHalfW, 0, z)
-      colors.push(c.r, c.g, c.b, fadeZ * 0.3, c.r, c.g, c.b, fadeZ * 0.3)
+    for (let z = -gridHalf; z <= gridHalf; z += 1) {
+      const fade = 1 - Math.abs(z) / gridHalf
+      pts.push(-gridHalf, 0, z, gridHalf, 0, z)
+      colors.push(c.r, c.g, c.b, fade * 0.3, c.r, c.g, c.b, fade * 0.3)
     }
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
@@ -376,27 +377,20 @@ function CampusGrid() {
 
   return (
     <group>
-      {/* Grid lines */}
       <lineSegments geometry={gridGeo}>
         <lineBasicMaterial vertexColors transparent opacity={0.10} />
       </lineSegments>
 
-      {/* Perimeter glow — outer */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
-        <planeGeometry args={[CAMPUS_W + 4.5, CAMPUS_H + 4.5]} />
-        <meshStandardMaterial color="#000" transparent opacity={0} />
-      </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
-        <ringGeometry args={[Math.max(gridHalfW, gridHalfH) - 0.5, Math.max(gridHalfW, gridHalfH), 64]} />
+        <ringGeometry args={[gridHalf - 0.5, gridHalf, 64]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
           transparent opacity={0.08} toneMapped={false} side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Dark ground underneath everything */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
-        <planeGeometry args={[CAMPUS_W + 8, CAMPUS_H + 8]} />
+        <planeGeometry args={[gridHalf * 2 + 4, gridHalf * 2 + 4]} />
         <meshStandardMaterial color="#010103" metalness={0.95} roughness={0.4} />
       </mesh>
     </group>
@@ -408,7 +402,7 @@ function CampusGrid() {
    ═══════════════════════════════════════════════ */
 
 function SatelliteBase() {
-  const texture = useTexture('/campus-aerial.png')
+  const texture = useTexture('/campus-map.png')
 
   const scanlineTex = useMemo(() => {
     const canvas = document.createElement('canvas')
@@ -416,61 +410,59 @@ function SatelliteBase() {
     canvas.height = 8
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, 4, 8)
-    ctx.fillStyle = 'rgba(0,0,0,0.18)'
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'
     ctx.fillRect(0, 0, 4, 1)
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    tex.repeat.set(CAMPUS_W * 2, CAMPUS_H * 12)
+    tex.repeat.set(CAMPUS_W * 2, CAMPUS_H * 2)
     return tex
   }, [])
 
+  const diag = CAMPUS_W * Math.SQRT2 / 2
+
   return (
-    <group>
-      {/* Glow halo underneath — soft red bloom */}
+    <group position={[PLANE_OX, 0, PLANE_OZ]}>
+      {/* Glow halo underneath */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
         <planeGeometry args={[CAMPUS_W + 1.5, CAMPUS_H + 1.5]} />
         <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.8}
-          transparent opacity={0.06} toneMapped={false} side={THREE.DoubleSide}
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.7}
+          transparent opacity={0.05} toneMapped={false} side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Primary satellite map — detail preserved, glow from emissiveMap */}
+      {/* Campus map — detail visible, red holographic glow through features */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
         <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
         <meshStandardMaterial
           map={texture}
-          color="#3a3a3a"
+          color="#303030"
           emissive={ACCENT}
           emissiveMap={texture}
-          emissiveIntensity={1.3}
+          emissiveIntensity={1.1}
           transparent
-          opacity={0.52}
+          opacity={0.48}
           toneMapped={false}
         />
       </mesh>
 
-      {/* Scanline overlay — subtle hologram lines */}
+      {/* Scanline overlay */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.018, 0]}>
         <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
         <meshBasicMaterial
           map={scanlineTex}
           transparent
-          opacity={0.12}
+          opacity={0.10}
           depthWrite={false}
         />
       </mesh>
 
-      {/* Edge glow border — neon red frame */}
+      {/* Edge glow border */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.016, 0]}>
-        <ringGeometry args={[
-          Math.sqrt((CAMPUS_W / 2) ** 2 + (CAMPUS_H / 2) ** 2) - 0.3,
-          Math.sqrt((CAMPUS_W / 2) ** 2 + (CAMPUS_H / 2) ** 2) + 0.1,
-          64
-        ]} />
+        <ringGeometry args={[diag - 0.3, diag + 0.1, 64]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8}
-          transparent opacity={0.12} toneMapped={false} side={THREE.DoubleSide}
+          transparent opacity={0.10} toneMapped={false} side={THREE.DoubleSide}
         />
       </mesh>
     </group>
