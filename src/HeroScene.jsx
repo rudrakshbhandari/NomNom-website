@@ -324,19 +324,30 @@ const METERS_PER_UNIT = 60
 const GEISEL_SCALE = 0.28
 
 const LANDMARKS = [
-  { id: 'geisel',   name: 'Geisel Library',    x: -4.8,  z: -0.4,  w: 0, d: 0, h: 0, isGeisel: true },
-  { id: 'price',    name: 'Price Center',       x: -6.2,  z:  0.6,  w: 2.4, d: 1.6, h: 0.85 },
-  { id: 'sixth',    name: 'Sixth College',      x: -4.2,  z:  7.5,  w: 1.8, d: 1.5, h: 0.70 },
-  { id: 'seventh',  name: 'Seventh College',    x: 11.1,  z:  6.3,  w: 1.8, d: 1.3, h: 0.65 },
-  { id: 'eighth',   name: 'Eighth College',     x: -6.8,  z:  7.0,  w: 1.5, d: 1.3, h: 0.60 },
-  { id: 'rimac',    name: 'RIMAC',              x: -0.3,  z:  8.2,  w: 2.8, d: 1.8, h: 1.00 },
-  { id: 'revelle',  name: 'Revelle College',    x: -9.7,  z: -4.1,  w: 1.8, d: 1.5, h: 0.70 },
-  { id: 'muir',     name: 'Muir College',       x: -7.4,  z:  2.4,  w: 1.6, d: 1.3, h: 0.60 },
-  { id: 'marshall', name: 'Marshall College',    x:  7.2,  z: -5.7,  w: 1.8, d: 1.5, h: 0.70 },
-  { id: 'erc',      name: 'ERC',                x:-13.9,  z:  6.0,  w: 1.8, d: 1.3, h: 0.65 },
-  { id: 'warren',   name: 'Warren College',     x:  6.1,  z:  3.3,  w: 1.8, d: 1.3, h: 0.65 },
-  { id: 'libwalk',  name: 'Library Walk',       x: -3.7,  z:  0.1,  w: 0.15, d: 4, h: 0.02 },
+  { id: 'geisel',   name: 'Geisel Library',    x: -3.0,  z:  0.0,  w: 0, d: 0, h: 0, isGeisel: true },
+  { id: 'price',    name: 'Price Center',       x: -1.5,  z: -1.2,  w: 2.4, d: 1.6, h: 0.85 },
+  { id: 'sixth',    name: 'Sixth College',      x:  2.0,  z: -2.5,  w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'seventh',  name: 'Seventh College',    x:  4.5,  z:  1.5,  w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'eighth',   name: 'Eighth College',     x:  0.5,  z:  6.5,  w: 1.5, d: 1.3, h: 0.60 },
+  { id: 'rimac',    name: 'RIMAC',              x: -2.0,  z:  5.5,  w: 2.8, d: 1.8, h: 1.00 },
+  { id: 'revelle',  name: 'Revelle College',    x: -5.5,  z: -7.5,  w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'muir',     name: 'Muir College',       x: -7.5,  z: -2.5,  w: 1.6, d: 1.3, h: 0.60 },
+  { id: 'marshall', name: 'Marshall College',    x: -7.5,  z:  2.0,  w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'erc',      name: 'ERC',                x: -9.5,  z:  5.5,  w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'warren',   name: 'Warren College',     x:  0.0,  z:  2.5,  w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'libwalk',  name: 'Library Walk',       x: -1.5,  z: -0.5,  w: 0.15, d: 4, h: 0.02 },
 ]
+
+const DINING_HALLS = [
+  { id: 'dh-64deg',   name: '64 Degrees',       x: -5.0,  z: -7.0 },
+  { id: 'dh-pines',   name: 'Pines',            x: -7.0,  z: -2.0 },
+  { id: 'dh-canyon',   name: 'Canyon Vista',     x:  0.5,  z:  2.0 },
+  { id: 'dh-sixth',   name: 'Sixth Dining',     x:  2.5,  z: -2.0 },
+  { id: 'dh-ocean',   name: 'OceanView',        x:  0.0,  z: -1.5 },
+  { id: 'dh-bistro',  name: 'Bistro',           x: -7.0,  z:  2.5 },
+]
+
+const ALL_LOCATIONS = [...LANDMARKS, ...DINING_HALLS]
 
 /* ═══════════════════════════════════════════════
    Holographic campus grid
@@ -668,14 +679,95 @@ function CampusBuilding({ landmark, selected, onSelect }) {
 }
 
 /* ═══════════════════════════════════════════════
+   Dining hall marker — white holographic pillar
+   ═══════════════════════════════════════════════ */
+
+const DH_COLOR = '#ffffff'
+
+function DiningHallMarker({ hall, selected, onSelect }) {
+  const { id, x, z, name } = hall
+  const [hovered, setHovered] = useState(false)
+
+  const handleClick = useCallback((e) => {
+    e.stopPropagation()
+    onSelect(id)
+  }, [onSelect, id])
+
+  const beamOp = selected ? 0.50 : hovered ? 0.30 : 0.15
+  const sphereGlow = selected ? 3 : hovered ? 2 : 1.2
+
+  return (
+    <group position={[x, 0.03, z]}>
+      {/* Click target */}
+      <mesh position={[0, 0.2, 0]}
+        onClick={handleClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <cylinderGeometry args={[0.3, 0.3, 0.5, 8]} />
+        <meshStandardMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+
+      {/* Base glow disc */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <circleGeometry args={[0.2, 16]} />
+        <meshStandardMaterial
+          color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={0.8}
+          transparent opacity={selected ? 0.25 : 0.10} toneMapped={false} side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {selected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+          <ringGeometry args={[0.3, 0.42, 24]} />
+          <meshStandardMaterial
+            color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={2}
+            transparent opacity={0.40} toneMapped={false} side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
+
+      {/* Vertical beam — shorter than landmark pillars */}
+      <mesh position={[0, 0.22, 0]}>
+        <cylinderGeometry args={[0.008, 0.008, 0.4, 4]} />
+        <meshStandardMaterial
+          color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1}
+          transparent opacity={beamOp} toneMapped={false}
+        />
+      </mesh>
+
+      {/* Marker sphere */}
+      <mesh position={[0, 0.45, 0]}>
+        <sphereGeometry args={[0.04, 8, 8]} />
+        <meshStandardMaterial
+          color={DH_COLOR} emissive={DH_COLOR}
+          emissiveIntensity={sphereGlow} toneMapped={false}
+        />
+      </mesh>
+      <pointLight position={[0, 0.45, 0]} color={DH_COLOR} intensity={selected ? 0.5 : 0.1} distance={2} />
+
+      {/* Label */}
+      <Html center position={[0, 0.65, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
+          textShadow: '0 0 6px rgba(255,255,255,0.4)',
+          opacity: selected || hovered ? 1 : 0.55,
+        }}>{name}</div>
+      </Html>
+    </group>
+  )
+}
+
+/* ═══════════════════════════════════════════════
    Path connector between two selected locations
    ═══════════════════════════════════════════════ */
 
 function RouteLine({ origin, destination }) {
   const geo = useMemo(() => {
     if (!origin || !destination) return null
-    const o = LANDMARKS.find(l => l.id === origin)
-    const d = LANDMARKS.find(l => l.id === destination)
+    const o = ALL_LOCATIONS.find(l => l.id === origin)
+    const d = ALL_LOCATIONS.find(l => l.id === destination)
     if (!o || !d) return null
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute([
@@ -718,8 +810,8 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
       startPos.current.copy(camera.position)
       startLook.current.set(0, 0, 0)
 
-      const o = LANDMARKS.find(l => l.id === origin)
-      const d = LANDMARKS.find(l => l.id === destination)
+      const o = ALL_LOCATIONS.find(l => l.id === origin)
+      const d = ALL_LOCATIONS.find(l => l.id === destination)
       const mx = (o.x + d.x) / 2
       const mz = (o.z + d.z) / 2
       const dx = d.x - o.x, dz = d.z - o.z
@@ -820,6 +912,14 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
           onSelect={onBuildingClick}
         />
       ))}
+      {DINING_HALLS.map(dh => (
+        <DiningHallMarker
+          key={dh.id}
+          hall={dh}
+          selected={dh.id === origin || dh.id === destination}
+          onSelect={onBuildingClick}
+        />
+      ))}
     </>
   )
 }
@@ -830,8 +930,8 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
 
 function StatsPanel({ origin, destination, visible }) {
   if (!origin || !destination) return null
-  const o = LANDMARKS.find(l => l.id === origin)
-  const d = LANDMARKS.find(l => l.id === destination)
+  const o = ALL_LOCATIONS.find(l => l.id === origin)
+  const d = ALL_LOCATIONS.find(l => l.id === destination)
   if (!o || !d) return null
 
   const dx = (d.x - o.x) * METERS_PER_UNIT
