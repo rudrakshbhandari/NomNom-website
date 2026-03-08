@@ -324,27 +324,27 @@ const METERS_PER_UNIT = 60
 const GEISEL_SCALE = 0.28
 
 const LANDMARKS = [
-  { id: 'geisel',   name: 'Geisel Library',    x: -3.0,  z:  0.0,  w: 0, d: 0, h: 0, isGeisel: true },
-  { id: 'price',    name: 'Price Center',       x: -1.5,  z: -1.2,  w: 2.4, d: 1.6, h: 0.85 },
-  { id: 'sixth',    name: 'Sixth College',      x:  2.0,  z: -2.5,  w: 1.8, d: 1.5, h: 0.70 },
-  { id: 'seventh',  name: 'Seventh College',    x:  4.5,  z:  1.5,  w: 1.8, d: 1.3, h: 0.65 },
-  { id: 'eighth',   name: 'Eighth College',     x:  0.5,  z:  6.5,  w: 1.5, d: 1.3, h: 0.60 },
-  { id: 'rimac',    name: 'RIMAC',              x: -2.0,  z:  5.5,  w: 2.8, d: 1.8, h: 1.00 },
-  { id: 'revelle',  name: 'Revelle College',    x: -5.5,  z: -7.5,  w: 1.8, d: 1.5, h: 0.70 },
-  { id: 'muir',     name: 'Muir College',       x: -7.5,  z: -2.5,  w: 1.6, d: 1.3, h: 0.60 },
-  { id: 'marshall', name: 'Marshall College',    x: -7.5,  z:  2.0,  w: 1.8, d: 1.5, h: 0.70 },
-  { id: 'erc',      name: 'ERC',                x: -9.5,  z:  5.5,  w: 1.8, d: 1.3, h: 0.65 },
-  { id: 'warren',   name: 'Warren College',     x:  0.0,  z:  2.5,  w: 1.8, d: 1.3, h: 0.65 },
-  { id: 'libwalk',  name: 'Library Walk',       x: -1.5,  z: -0.5,  w: 0.15, d: 4, h: 0.02 },
+  { id: 'geisel',   name: 'Geisel Library',    x: -3.08, z:  0.79, w: 0, d: 0, h: 0, isGeisel: true },
+  { id: 'price',    name: 'Price Center',       x: -0.19, z: -0.20, w: 2.4, d: 1.6, h: 0.85 },
+  { id: 'sixth',    name: 'Sixth College',      x: -2.0,  z:  7.41, w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'seventh',  name: 'Seventh College',    x:-15.26, z:  6.97, w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'eighth',   name: 'Eighth College',     x: 11.16, z:  8.20, w: 1.5, d: 1.3, h: 0.60 },
+  { id: 'rimac',    name: 'RIMAC',              x:-10.19, z:  4.22, w: 2.8, d: 1.8, h: 1.00 },
+  { id: 'revelle',  name: 'Revelle College',    x:  8.45, z:  6.12, w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'muir',     name: 'Muir College',       x:  1.18, z:  7.95, w: 1.6, d: 1.3, h: 0.60 },
+  { id: 'marshall', name: 'Marshall College',   x: -5.41, z:  6.20, w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'erc',      name: 'ERC',                x:-10.56, z:  8.73, w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'warren',   name: 'Warren College',     x: -7.56, z: -6.79, w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'libwalk',  name: 'Library Walk',       x: -1.64, z:  0.30, w: 0.15, d: 4, h: 0.02 },
 ]
 
 const DINING_HALLS = [
-  { id: 'dh-64deg',   name: '64 Degrees',       x: -5.0,  z: -7.0 },
-  { id: 'dh-pines',   name: 'Pines',            x: -7.0,  z: -2.0 },
-  { id: 'dh-canyon',   name: 'Canyon Vista',     x:  0.5,  z:  2.0 },
-  { id: 'dh-sixth',   name: 'Sixth Dining',     x:  2.5,  z: -2.0 },
-  { id: 'dh-ocean',   name: 'OceanView',        x:  0.0,  z: -1.5 },
-  { id: 'dh-bistro',  name: 'Bistro',           x: -7.0,  z:  2.5 },
+  { id: 'dh-64deg',   name: '64 Degrees',       x: -5.0,  z:  7.0 },
+  { id: 'dh-pines',   name: 'Pines',            x: -7.0,  z:  2.0 },
+  { id: 'dh-canyon',   name: 'Canyon Vista',     x:  0.5,  z: -2.0 },
+  { id: 'dh-sixth',   name: 'Sixth Dining',     x:  2.5,  z:  2.0 },
+  { id: 'dh-ocean',   name: 'OceanView',        x:  0.0,  z:  1.5 },
+  { id: 'dh-bistro',  name: 'Bistro',           x: -7.0,  z: -2.5 },
 ]
 
 const ALL_LOCATIONS = [...LANDMARKS, ...DINING_HALLS]
