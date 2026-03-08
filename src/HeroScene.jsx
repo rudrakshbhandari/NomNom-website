@@ -325,16 +325,16 @@ const GEISEL_SCALE = 0.28
 
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x: -4.8,  z: -0.4,  w: 0, d: 0, h: 0, isGeisel: true },
-  { id: 'price',    name: 'Price Center',       x: -6.2,  z:  0.6,  w: 2.4, d: 1.6, h: 0.55 },
-  { id: 'sixth',    name: 'Sixth College',      x: -4.2,  z:  7.5,  w: 1.8, d: 1.5, h: 0.45 },
-  { id: 'seventh',  name: 'Seventh College',    x: 11.1,  z:  6.3,  w: 1.8, d: 1.3, h: 0.42 },
-  { id: 'eighth',   name: 'Eighth College',     x: -6.8,  z:  7.0,  w: 1.5, d: 1.3, h: 0.40 },
-  { id: 'rimac',    name: 'RIMAC',              x: -0.3,  z:  8.2,  w: 2.8, d: 1.8, h: 0.65 },
-  { id: 'revelle',  name: 'Revelle College',    x: -9.7,  z: -4.1,  w: 1.8, d: 1.5, h: 0.45 },
-  { id: 'muir',     name: 'Muir College',       x: -7.4,  z:  2.4,  w: 1.6, d: 1.3, h: 0.40 },
-  { id: 'marshall', name: 'Marshall College',    x:  7.2,  z: -5.7,  w: 1.8, d: 1.5, h: 0.45 },
-  { id: 'erc',      name: 'ERC',                x:-13.9,  z:  6.0,  w: 1.8, d: 1.3, h: 0.42 },
-  { id: 'warren',   name: 'Warren College',     x:  6.1,  z:  3.3,  w: 1.8, d: 1.3, h: 0.42 },
+  { id: 'price',    name: 'Price Center',       x: -6.2,  z:  0.6,  w: 2.4, d: 1.6, h: 0.85 },
+  { id: 'sixth',    name: 'Sixth College',      x: -4.2,  z:  7.5,  w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'seventh',  name: 'Seventh College',    x: 11.1,  z:  6.3,  w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'eighth',   name: 'Eighth College',     x: -6.8,  z:  7.0,  w: 1.5, d: 1.3, h: 0.60 },
+  { id: 'rimac',    name: 'RIMAC',              x: -0.3,  z:  8.2,  w: 2.8, d: 1.8, h: 1.00 },
+  { id: 'revelle',  name: 'Revelle College',    x: -9.7,  z: -4.1,  w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'muir',     name: 'Muir College',       x: -7.4,  z:  2.4,  w: 1.6, d: 1.3, h: 0.60 },
+  { id: 'marshall', name: 'Marshall College',    x:  7.2,  z: -5.7,  w: 1.8, d: 1.5, h: 0.70 },
+  { id: 'erc',      name: 'ERC',                x:-13.9,  z:  6.0,  w: 1.8, d: 1.3, h: 0.65 },
+  { id: 'warren',   name: 'Warren College',     x:  6.1,  z:  3.3,  w: 1.8, d: 1.3, h: 0.65 },
   { id: 'libwalk',  name: 'Library Walk',       x: -3.7,  z:  0.1,  w: 0.15, d: 4, h: 0.02 },
 ]
 
@@ -468,7 +468,7 @@ function CampusBuilding({ landmark, selected, onSelect }) {
     for (let i = 0; i < count; i++) {
       const bw = w * (0.18 + rng() * 0.22)
       const bd = d * (0.18 + rng() * 0.22)
-      const bh = h * (0.45 + rng() * 0.8)
+      const bh = h * (0.7 + rng() * 1.0)
       const ox = (rng() - 0.5) * (w - bw) * 0.85
       const oz = (rng() - 0.5) * (d - bd) * 0.85
       items.push({ w: bw, d: bd, h: bh, ox, oz })
@@ -550,9 +550,9 @@ function CampusBuilding({ landmark, selected, onSelect }) {
 
   const tallest = cluster.length > 0 ? cluster[0].h : h
   const ringR = Math.max(w, d) * 0.65
-  const wfOp = selected ? 0.50 : hovered ? 0.32 : 0.18
-  const fillOp = selected ? 0.10 : hovered ? 0.06 : 0.025
-  const edgeOp = selected ? 0.45 : hovered ? 0.30 : 0.20
+  const wfOp = selected ? 0.65 : hovered ? 0.45 : 0.30
+  const fillOp = selected ? 0.14 : hovered ? 0.09 : 0.05
+  const edgeOp = selected ? 0.60 : hovered ? 0.45 : 0.35
 
   return (
     <group position={[x, 0.03, z]}>
@@ -594,9 +594,9 @@ function CampusBuilding({ landmark, selected, onSelect }) {
           {/* Corner edge glow */}
           {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], ci) => (
             <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]}>
-              <boxGeometry args={[0.018, b.h, 0.018]} />
+              <boxGeometry args={[0.022, b.h, 0.022]} />
               <meshStandardMaterial
-                color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2}
+                color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8}
                 transparent opacity={edgeOp} toneMapped={false}
               />
             </mesh>
