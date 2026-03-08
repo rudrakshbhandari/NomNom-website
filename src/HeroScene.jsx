@@ -995,12 +995,12 @@ function StatsPanel({ origin, destination, visible }) {
   const d = ALL_LOCATIONS.find(l => l.id === destination)
   if (!o || !d) return null
 
-  const dx = (d.x - o.x) * METERS_PER_UNIT
-  const dz = (d.z - o.z) * METERS_PER_UNIT
-  const distM = Math.round(Math.sqrt(dx * dx + dz * dz))
-  const walkMin = (distM / 1.4 / 60).toFixed(1)
-  const bikeMin = (distM / 5 / 60).toFixed(1)
-  const timeSaved = (distM / 1.4 / 60 - distM / 5 / 60).toFixed(1)
+  const coordDist = Math.sqrt((d.x - o.x) ** 2 + (d.z - o.z) ** 2)
+  const deliveryDistanceMeters = Math.round(coordDist * METERS_PER_UNIT)
+  const walkMin = (deliveryDistanceMeters / 1.4 / 60 * 2).toFixed(1)
+
+  const distanceFee = (deliveryDistanceMeters / 150) * 0.50
+  const carrierEarnings = 2.00 + distanceFee + 1.00
 
   const rowStyle = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -1043,26 +1043,35 @@ function StatsPanel({ origin, destination, visible }) {
 
       <div style={rowStyle}>
         <span style={labelStyle}>Distance</span>
-        <span style={valueStyle}>{distM}m</span>
+        <span style={valueStyle}>{deliveryDistanceMeters} m</span>
       </div>
       <div style={rowStyle}>
         <span style={labelStyle}>Walking Time</span>
-        <span style={valueStyle}>{walkMin} min</span>
-      </div>
-      <div style={rowStyle}>
-        <span style={labelStyle}>Time Saved Using NomNom</span>
-        <span style={accentVal}>{timeSaved} min</span>
-      </div>
-      <div style={{ ...rowStyle, borderBottom: 'none' }}>
-        <span style={labelStyle}>Potential Earnings (Batch ×3)</span>
-        <span style={accentVal}>$9</span>
+        <span style={accentVal}>{walkMin} min</span>
       </div>
 
       <div style={{
-        marginTop: 14, fontSize: 11, color: 'rgba(255,255,255,0.22)',
-        textAlign: 'center', letterSpacing: '0.02em',
+        marginTop: 18, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)',
       }}>
-        Single order: $3 · Batch of 3: $9
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', marginBottom: 12 }}>
+          Estimated Carrier Earnings
+        </div>
+        <div style={rowStyle}>
+          <span style={labelStyle}>Base fee</span>
+          <span style={valueStyle}>$2.00</span>
+        </div>
+        <div style={rowStyle}>
+          <span style={labelStyle}>Distance fee</span>
+          <span style={valueStyle}>${distanceFee.toFixed(2)}</span>
+        </div>
+        <div style={rowStyle}>
+          <span style={labelStyle}>Tip</span>
+          <span style={valueStyle}>$1.00</span>
+        </div>
+        <div style={{ ...rowStyle, borderBottom: 'none', paddingTop: 12, marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ ...labelStyle, fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Total earnings</span>
+          <span style={accentVal}>${carrierEarnings.toFixed(2)}</span>
+        </div>
       </div>
     </div>
   )
