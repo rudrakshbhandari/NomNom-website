@@ -416,160 +416,356 @@ function CampusWireframe() {
       arr.push([[cx + hw, cz + hd], [cx - hw, cz + hd]])
       arr.push([[cx - hw, cz + hd], [cx - hw, cz - hd]])
     }
+    const closedPoly = (arr, pts) => {
+      for (let i = 0; i < pts.length; i++)
+        arr.push([pts[i], pts[(i + 1) % pts.length]])
+    }
 
-    /* ── Campus perimeter ── */
-    poly(bright, [
-      [-9, -8.5], [-6, -9.5], [-2.5, -9], [1, -8], [4, -7.5],
-      [6.5, -6], [7.5, -4], [7.5, -1.5], [7, 1], [6, 4],
-      [5, 6], [3, 8.5], [0, 10], [-3, 10.5], [-5.5, 9.5],
-      [-7.5, 7.5], [-8.5, 5.5], [-9.5, 3], [-10, 0],
-      [-9.5, -3], [-9, -6], [-9, -8.5],
+    /* ══════════════════════════════════════════════
+       CAMPUS PERIMETER — traced from map boundary
+       ══════════════════════════════════════════════ */
+    closedPoly(bright, [
+      [-9.0, -9.5], [-7.0, -10.2], [-4.0, -9.8], [-1.0, -9.0],
+      [2.5, -8.5], [5.0, -8.0], [7.0, -7.0], [8.5, -5.5],
+      [9.0, -3.0], [9.0, -0.5], [8.5, 2.0], [8.0, 4.5],
+      [7.0, 7.0], [5.5, 9.0], [3.0, 10.5], [0.0, 11.0],
+      [-3.5, 11.0], [-6.0, 10.0], [-7.5, 8.5], [-8.0, 6.5],
+      [-8.5, 4.0], [-8.8, 1.5], [-8.8, -1.0], [-8.8, -3.5],
+      [-9.0, -6.0], [-9.2, -8.0],
     ])
 
-    /* ── N Torrey Pines Road (west edge, N → S) ── */
+    /* ══════════════════════════════════════════════
+       ROADS — traced from map road network
+       ══════════════════════════════════════════════ */
+
+    /* N Torrey Pines Road — western arterial (N→S along coast) */
     poly(normal, [
-      [-9, -7], [-8.5, -5], [-8, -3], [-7.5, -1],
-      [-7.2, 1], [-7, 3], [-7, 5], [-7, 7], [-6.5, 9],
+      [-8.8, -9.5], [-8.6, -7.5], [-8.3, -5.5], [-8.0, -3.5],
+      [-7.8, -1.5], [-7.5, 0.5], [-7.3, 2.5], [-7.0, 4.5],
+      [-7.0, 6.5], [-7.2, 8.5], [-7.5, 10.0],
     ])
 
-    /* ── Gilman Dr upper (NW → NE through north campus) ── */
+    /* Scholars Dr / N campus E-W — through ERC, past RIMAC */
     poly(normal, [
-      [-8.5, -5.5], [-6, -6], [-3.5, -5.5], [-1, -6],
-      [1.5, -5.5], [4, -6], [6.5, -6.5],
+      [-8.0, -5.0], [-6.5, -5.5], [-5.0, -5.0], [-3.5, -4.8],
+      [-2.0, -5.0], [-0.5, -5.5], [1.0, -5.8], [3.0, -5.5],
+      [5.0, -5.0], [7.0, -5.5],
     ])
 
-    /* ── Voigt Dr (E-W through center) ── */
+    /* Voigt Dr — E-W through central campus (Marshall → Warren) */
     poly(normal, [
-      [-7.5, -1], [-5, -1.5], [-2.5, -1], [0, -1.5],
-      [2.5, -2], [5, -2.5], [7, -3],
+      [-7.5, -1.5], [-5.5, -1.8], [-4.0, -1.5], [-2.5, -1.2],
+      [-0.8, -1.0], [0.5, -1.2], [2.0, -1.5], [3.5, -2.0],
+      [5.0, -2.5], [7.0, -3.0],
     ])
 
-    /* ── La Jolla Village Dr (southern E-W) ── */
+    /* Russell Ln / Gilman — E-W south of Geisel */
     poly(normal, [
-      [-8.5, 7], [-6, 7.5], [-3.5, 7], [-1, 7.5],
-      [2, 7], [4.5, 7.5], [7, 7],
+      [-7.3, 2.5], [-5.5, 2.0], [-4.0, 1.8], [-2.5, 1.5],
+      [-1.0, 1.2], [0.5, 1.0], [2.0, 1.2], [3.5, 2.0],
+      [5.0, 2.5], [6.5, 3.0],
     ])
 
-    /* ── N-S east connector ── */
+    /* La Jolla Village Dr — southern E-W arterial */
     poly(normal, [
-      [6.5, -6.5], [6, -4.5], [5.5, -2.5], [5, -0.5],
-      [5, 1.5], [5, 3.5], [5, 5.5], [5, 7],
+      [-8.0, 8.0], [-6.0, 8.2], [-4.0, 8.0], [-2.0, 8.3],
+      [0.0, 8.5], [2.0, 8.5], [4.0, 8.3], [6.0, 8.5], [8.0, 8.5],
     ])
 
-    /* ── Central N-S road ── */
+    /* Eastern N-S connector (past Seventh, Warren, Sixth) */
     poly(normal, [
-      [-0.5, -7], [-0.5, -5], [-0.5, -3], [0, -1],
-      [0, 1], [0, 3], [0, 5], [-0.5, 7],
+      [6.5, -7.0], [6.0, -5.0], [5.5, -3.0], [5.5, -1.0],
+      [5.5, 1.0], [5.5, 3.0], [5.5, 5.0], [5.5, 7.0], [6.0, 8.5],
     ])
 
-    /* ── Gilman Dr south spur ── */
+    /* Central N-S road (through campus core) */
     poly(normal, [
-      [0, -1], [1, 1], [2, 3], [3, 5], [3.5, 7],
+      [-0.3, -7.5], [-0.3, -5.5], [-0.2, -3.5], [0.0, -1.5],
+      [0.0, 0.5], [0.0, 2.5], [-0.2, 4.5], [-0.3, 6.5], [-0.5, 8.0],
     ])
 
-    /* ── W connector (Muir → Marshall) ── */
+    /* NW spur — Rady / Torrey Pines Center road */
     poly(normal, [
-      [-7, 5], [-6, 3], [-5, 1], [-4.5, -0.5], [-5, -2],
+      [-8.5, -9.0], [-7.0, -8.5], [-6.0, -8.0], [-5.0, -7.5],
+      [-3.5, -7.2],
     ])
 
-    /* ── Library Walk ── */
+    /* SW connector — Muir to Marshall */
+    poly(normal, [
+      [-7.0, 5.0], [-6.5, 3.5], [-5.5, 2.0], [-5.0, 0.5],
+      [-4.5, -0.5], [-4.5, -2.0],
+    ])
+
+    /* SE diagonal — Price area to Sixth */
+    poly(normal, [
+      [2.0, 2.0], [2.5, 2.8], [3.0, 3.5], [3.5, 4.0],
+    ])
+
+    /* ══════════════════════════════════════════════
+       PATHS — pedestrian spines
+       ══════════════════════════════════════════════ */
+
+    /* Library Walk — main E-W pedestrian spine */
     poly(dim, [
-      [-3, 0.5], [-1.5, 0.7], [0, 0.8], [1.5, 0.7], [3, 0.5],
+      [-4.0, 0.5], [-2.5, 0.6], [-1.0, 0.7], [0.3, 0.8],
+      [1.5, 0.8], [3.0, 0.7], [4.0, 0.5],
     ])
 
-    /* ── Geisel cross-paths ── */
-    poly(dim, [[-1, -2], [-0.5, -0.5], [0, 1], [0, 2.5]])
-    poly(dim, [[-2, 0], [0, 0], [2, 0]])
-    poly(dim, [[1, -2.5], [1.5, -1], [2, 0.5]])
+    /* Ridge Walk — N-S through center */
+    poly(dim, [
+      [0.0, -2.5], [0.0, -1.5], [0.0, -0.5], [0.2, 0.3],
+      [0.3, 0.8], [0.3, 1.5], [0.2, 2.5],
+    ])
 
-    /* ── Warren → Geisel path ── */
-    poly(dim, [[2, -2], [1.5, -1], [1, 0], [0.5, 0.5]])
+    /* Warren → Geisel path */
+    poly(dim, [
+      [2.0, -2.0], [1.5, -1.2], [1.0, -0.3], [0.5, 0.3],
+    ])
 
-    /* ── Marshall → Geisel path ── */
-    poly(dim, [[-4, -1], [-2.5, -0.5], [-1, 0]])
+    /* Marshall → Geisel path */
+    poly(dim, [
+      [-4.2, -1.1], [-3.0, -0.6], [-1.5, -0.2], [0.0, 0.0],
+    ])
 
-    /* ── Muir → center path ── */
-    poly(dim, [[-6.5, 4.5], [-5, 3], [-3.5, 1.5], [-2, 0.5]])
+    /* Muir → center path */
+    poly(dim, [
+      [-6.7, 4.5], [-5.5, 3.5], [-4.0, 2.5], [-2.5, 1.5],
+      [-1.0, 0.8],
+    ])
 
-    /* ── ERC → RIMAC path ── */
-    poly(dim, [[-5.5, -5.5], [-3, -5.5], [-1, -5.8], [0, -5.9]])
+    /* ERC → RIMAC path */
+    poly(dim, [
+      [-5.9, -5.9], [-4.0, -5.5], [-2.0, -5.7], [0.0, -5.9],
+    ])
 
-    /* ── Revelle → School of Medicine ── */
-    poly(dim, [[-4.5, 8], [-3.5, 6.5], [-3, 5.5]])
+    /* Revelle → School of Medicine path */
+    poly(dim, [
+      [-4.5, 8.4], [-3.5, 7.0], [-3.0, 6.0], [-2.5, 5.5],
+    ])
 
-    /* ── Building footprints ── */
+    /* Sixth → Price path */
+    poly(dim, [
+      [3.6, 3.9], [3.0, 3.0], [2.5, 2.2], [2.0, 1.7],
+    ])
 
-    /* Price Center cluster */
-    rect(bright, 2.0, 1.7, 1.5, 0.9)
-    rect(bright, 2.6, 2.5, 0.9, 0.5)
-    rect(bright, 1.2, 2.4, 0.7, 0.5)
+    /* ══════════════════════════════════════════════
+       BUILDINGS — traced from map footprints
+       Every shape corresponds to a real structure
+       ══════════════════════════════════════════════ */
 
-    /* Warren College cluster */
-    rect(bright, 2.0, -2.0, 1.3, 0.8)
-    rect(bright, 1.2, -2.8, 0.9, 0.6)
-    rect(bright, 3.0, -1.5, 0.7, 0.5)
-    rect(bright, 2.8, -2.6, 0.6, 0.5)
+    /* ── Geisel Library base (hexagonal footprint) ── */
+    closedPoly(bright, [
+      [-0.45, -0.50], [0.45, -0.50], [0.65, 0.00],
+      [0.45, 0.50], [-0.45, 0.50], [-0.65, 0.00],
+    ])
 
-    /* RIMAC area */
-    rect(bright, 0.3, -5.9, 2.0, 1.3)
-    rect(bright, 0.3, -7.0, 1.0, 0.6)
+    /* ── Center Hall / CLICS (large, SW of Geisel) ── */
+    rect(bright, -1.5, 0.4, 1.1, 0.65)
 
-    /* ERC cluster */
-    rect(bright, -5.9, -5.9, 1.3, 0.9)
-    rect(bright, -5.2, -5.0, 0.7, 0.5)
-    rect(bright, -6.6, -5.2, 0.6, 0.5)
+    /* ── AP&M Building (NW of Geisel) ── */
+    rect(bright, -0.6, -1.1, 0.9, 0.55)
 
-    /* Marshall College cluster */
-    rect(bright, -4.2, -1.1, 1.3, 0.8)
-    rect(bright, -3.4, -0.3, 0.7, 0.5)
-    rect(bright, -4.8, -0.3, 0.6, 0.5)
+    /* ── York Hall (W of Geisel) ── */
+    rect(bright, -2.1, -0.3, 0.6, 0.45)
 
-    /* Muir College cluster */
-    rect(bright, -6.7, 4.5, 1.3, 0.9)
-    rect(bright, -6.0, 5.3, 0.8, 0.5)
-    rect(bright, -7.4, 3.8, 0.7, 0.5)
+    /* ── Urey Hall (between Geisel and AP&M) ── */
+    rect(bright, -1.0, -0.7, 0.5, 0.4)
 
-    /* Sixth College cluster */
-    rect(bright, 3.6, 3.9, 1.3, 0.8)
-    rect(bright, 4.3, 4.6, 0.7, 0.6)
-    rect(bright, 2.8, 4.5, 0.6, 0.5)
+    /* ── Mayer Hall (NW of Geisel) ── */
+    rect(bright, -0.5, -1.7, 0.5, 0.4)
 
-    /* Revelle College cluster */
-    rect(bright, -4.5, 8.4, 1.3, 0.9)
-    rect(bright, -3.8, 9.2, 0.8, 0.5)
-    rect(bright, -5.3, 9.0, 0.7, 0.5)
+    /* ── EBU-I / Jacobs Hall (E of Geisel) ── */
+    rect(bright, 1.1, -0.6, 0.8, 0.5)
 
-    /* Seventh College */
-    rect(bright, 5.0, -4.2, 1.3, 0.8)
-    rect(bright, 5.7, -3.5, 0.6, 0.5)
+    /* ── Cognitive Science Bldg (SE of Geisel) ── */
+    rect(bright, 1.2, 0.4, 0.7, 0.5)
 
-    /* Eighth College */
-    rect(bright, -2.0, -7.0, 1.1, 0.8)
-    rect(bright, -1.2, -7.7, 0.6, 0.5)
+    /* ── Pepper Canyon Hall (E of Geisel) ── */
+    rect(bright, 1.8, -0.1, 0.6, 0.4)
 
-    /* Geisel base footprint */
-    rect(bright, 0, 0, 1.0, 1.0)
+    /* ── Galbraith Hall (S of Geisel) ── */
+    rect(bright, 0.0, 1.4, 0.55, 0.4)
 
-    /* Scattered campus buildings */
-    rect(normal, -3, 6, 1.4, 0.7)
-    rect(normal, -1, 2.5, 0.8, 0.5)
-    rect(normal, -1.5, 3.2, 0.7, 0.5)
-    rect(normal, 1.5, 2.8, 0.6, 0.5)
-    rect(normal, 0.5, -1.5, 0.6, 0.5)
-    rect(normal, -0.5, 0.5, 0.8, 0.5)
-    rect(normal, -2.5, 1.5, 0.7, 0.5)
-    rect(normal, -1.5, -0.5, 0.6, 0.5)
-    rect(normal, 3.5, -0.5, 0.7, 0.5)
-    rect(normal, 4.0, 1.0, 0.6, 0.5)
-    rect(normal, -3.5, -3, 0.7, 0.5)
-    rect(normal, -2, -4, 0.6, 0.5)
-    rect(normal, 1, -4, 0.7, 0.6)
-    rect(normal, 3, -3.5, 0.6, 0.5)
-    rect(normal, -5.5, 1.5, 0.7, 0.5)
-    rect(normal, -5, 7, 0.6, 0.5)
-    rect(normal, -2, 5, 0.7, 0.5)
-    rect(normal, 1, 5, 0.6, 0.5)
-    rect(normal, -1, 7.5, 0.7, 0.5)
+    /* ── Peterson Hall (SE of Geisel) ── */
+    rect(bright, 0.8, 1.2, 0.5, 0.4)
+
+    /* ── University Center (S of Geisel) ── */
+    rect(bright, -0.8, 1.0, 0.75, 0.5)
+
+    /* ── Price Center (L-shaped complex) ── */
+    closedPoly(bright, [
+      [1.3, 1.3], [2.8, 1.3], [2.8, 1.9], [2.2, 1.9],
+      [2.2, 2.3], [1.3, 2.3],
+    ])
+
+    /* ── Bookstore (N of Price Center) ── */
+    rect(bright, 1.5, 2.5, 0.8, 0.4)
+
+    /* ── Student Services Center (E of Price Center) ── */
+    rect(bright, 3.0, 2.0, 0.65, 0.5)
+
+    /* ── Parking Office (SE of Price Center) ── */
+    rect(bright, 2.5, 2.6, 0.5, 0.3)
+
+    /* ── Faculty Club (SW of Geisel) ── */
+    rect(bright, -2.2, 2.0, 0.8, 0.5)
+
+    /* ── Chancellor's Complex (S of Faculty Club) ── */
+    rect(bright, -1.2, 2.5, 0.7, 0.5)
+
+    /* ── Warren College — residential halls (grid of dorms) ── */
+    rect(bright, 1.5, -2.5, 0.65, 0.35)
+    rect(bright, 2.3, -2.5, 0.65, 0.35)
+    rect(bright, 3.0, -2.5, 0.65, 0.35)
+    rect(bright, 1.5, -1.9, 0.65, 0.35)
+    rect(bright, 2.3, -1.9, 0.65, 0.35)
+    rect(bright, 3.0, -1.9, 0.65, 0.35)
+
+    /* ── Warren Lecture Hall ── */
+    rect(bright, 2.3, -1.2, 0.85, 0.4)
+
+    /* ── Jacobs School of Engineering (E of center) ── */
+    rect(bright, 3.5, -0.5, 0.85, 0.45)
+    rect(bright, 3.5, 0.2, 0.7, 0.4)
+
+    /* ── Campus Services Complex (E of Warren) ── */
+    rect(bright, 4.6, -1.2, 1.0, 0.6)
+    rect(bright, 4.6, -0.4, 0.8, 0.5)
+
+    /* ── Canyonview Athletics (SE of Warren) ── */
+    closedPoly(dim, [
+      [4.0, 0.2], [6.0, 0.2], [6.0, 1.5], [4.0, 1.5],
+    ])
+
+    /* ── RIMAC Arena (large rectangular arena) ── */
+    rect(bright, 0.3, -5.9, 2.2, 1.3)
+
+    /* ── Fitness / Fire Course (E of RIMAC) ── */
+    rect(bright, 2.2, -5.2, 0.8, 0.55)
+
+    /* ── North Recreation Park field outline ── */
+    closedPoly(dim, [
+      [-0.5, -7.5], [1.5, -7.5], [1.5, -6.8], [-0.5, -6.8],
+    ])
+
+    /* ── Eleanor Roosevelt College buildings ── */
+    rect(bright, -6.1, -6.2, 0.9, 0.55)
+    rect(bright, -5.3, -6.4, 0.7, 0.4)
+    rect(bright, -5.3, -5.6, 0.75, 0.4)
+    rect(bright, -6.6, -5.4, 0.6, 0.5)
+
+    /* ── Institute of the Americas / IR&PS (W of ERC) ── */
+    rect(bright, -6.9, -5.0, 0.8, 0.5)
+
+    /* ── Pacific Hall (near ERC) ── */
+    rect(bright, -5.5, -4.8, 0.6, 0.4)
+
+    /* ── San Diego Supercomputer Center ── */
+    rect(bright, -3.8, -4.5, 1.1, 0.65)
+
+    /* ── Hopkins Parking Structure ── */
+    rect(normal, -2.8, -3.5, 0.95, 0.55)
+
+    /* ── Thurgood Marshall College buildings ── */
+    rect(bright, -4.5, -1.5, 0.75, 0.5)
+    rect(bright, -4.5, -0.7, 0.7, 0.4)
+    rect(bright, -3.7, -1.2, 0.6, 0.75)
+    rect(bright, -5.0, -0.1, 0.65, 0.5)
+
+    /* ── Cognitive Studies / Public Programs (W of Marshall) ── */
+    rect(bright, -5.8, -0.5, 0.7, 0.5)
+
+    /* ── Marshall College field outline ── */
+    closedPoly(dim, [
+      [-5.5, 0.4], [-3.5, 0.4], [-3.5, 1.7], [-5.5, 1.7],
+    ])
+
+    /* ── Muir College buildings ── */
+    rect(bright, -7.0, 3.8, 0.7, 0.5)
+    rect(bright, -6.3, 4.2, 0.7, 0.5)
+    rect(bright, -7.0, 4.8, 0.7, 0.4)
+    rect(bright, -6.0, 5.0, 0.65, 0.4)
+
+    /* ── Muir Student Center ── */
+    rect(bright, -5.8, 3.8, 0.5, 0.4)
+
+    /* ── Muir Field outline ── */
+    closedPoly(dim, [
+      [-7.6, 4.0], [-5.5, 4.0], [-5.5, 5.5], [-7.6, 5.5],
+    ])
+
+    /* ── Mandeville Center (performing arts, near Muir) ── */
+    rect(bright, -5.2, 3.0, 0.85, 0.5)
+
+    /* ── Visual Arts (W campus) ── */
+    rect(bright, -5.5, 2.0, 0.7, 0.5)
+
+    /* ── Sixth College buildings ── */
+    rect(bright, 3.3, 3.5, 0.7, 0.45)
+    rect(bright, 4.1, 3.5, 0.7, 0.45)
+    rect(bright, 3.3, 4.2, 0.7, 0.45)
+    rect(bright, 4.1, 4.2, 0.7, 0.45)
+
+    /* ── Pepper Canyon Apartments (S of Sixth) ── */
+    rect(bright, 4.0, 4.9, 0.7, 0.4)
+
+    /* ── Gilman Parking Structure ── */
+    rect(normal, 1.5, 3.5, 0.85, 0.5)
+
+    /* ── Seventh College buildings ── */
+    rect(bright, 4.8, -4.5, 0.7, 0.5)
+    rect(bright, 5.5, -4.5, 0.7, 0.5)
+    rect(bright, 5.1, -3.7, 0.8, 0.4)
+
+    /* ── Eighth College buildings ── */
+    rect(bright, -2.2, -7.2, 0.7, 0.5)
+    rect(bright, -1.4, -7.2, 0.7, 0.5)
+    rect(bright, -1.8, -6.5, 0.8, 0.4)
+
+    /* ── Revelle College buildings ── */
+    rect(bright, -4.8, 8.0, 0.7, 0.5)
+    rect(bright, -4.0, 8.0, 0.7, 0.5)
+    rect(bright, -4.8, 8.7, 0.7, 0.4)
+    rect(bright, -3.8, 8.7, 0.7, 0.4)
+    rect(bright, -5.0, 9.3, 0.6, 0.4)
+
+    /* ── Mandell Weiss Forum (S of Revelle) ── */
+    rect(bright, -4.5, 10.0, 0.65, 0.5)
+
+    /* ── Mandell Weiss Theatre ── */
+    rect(bright, -4.5, 10.7, 0.8, 0.5)
+
+    /* ── Theatre District buildings ── */
+    rect(bright, -3.5, 10.0, 0.7, 0.5)
+
+    /* ── School of Medicine complex ── */
+    rect(bright, -2.5, 6.0, 1.0, 0.6)
+    rect(bright, -1.5, 6.5, 0.8, 0.5)
+    rect(bright, -3.0, 7.0, 0.7, 0.45)
+    rect(bright, -1.8, 7.2, 0.6, 0.4)
+
+    /* ── VA Medical Center ── */
+    rect(bright, 2.0, 6.0, 0.9, 0.6)
+    rect(bright, 3.0, 6.4, 0.8, 0.5)
+
+    /* ── Sequoyah Hall (between SoM and center) ── */
+    rect(bright, -3.0, 5.0, 0.7, 0.5)
+
+    /* ── Medical Education / Biomedical Library ── */
+    rect(bright, -1.0, 5.5, 0.6, 0.45)
+    rect(bright, 0.5, -1.5, 0.6, 0.45)
+
+    /* ── Rady School of Management (far NW) ── */
+    rect(bright, -6.8, -8.0, 1.0, 0.65)
+    rect(bright, -5.8, -7.5, 0.7, 0.5)
+
+    /* ── North Campus Housing ── */
+    rect(bright, -3.0, -7.5, 0.8, 0.5)
+    rect(bright, -2.0, -7.8, 0.7, 0.4)
+
+    /* ── Humanities / Social Sciences (S of center) ── */
+    rect(bright, -2.5, 1.5, 0.7, 0.5)
+    rect(bright, -1.5, 1.2, 0.6, 0.4)
 
     return { bright, normal, dim }
   }, [])
