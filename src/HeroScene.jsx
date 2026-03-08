@@ -3,7 +3,7 @@ import {
   Suspense, Component,
 } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Html, useTexture } from '@react-three/drei'
+import { useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════════
@@ -330,8 +330,6 @@ const METERS_PER_UNIT = 50
 const GEISEL_SCALE = 0.15
 const CAMPUS_W = 28
 const CAMPUS_H = 28
-const PLANE_OX = 4.5
-const PLANE_OZ = -2.0
 
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x:  0.0,  z:  0.0,  w: 0, d: 0, h: 0, isGeisel: true },
@@ -398,73 +396,244 @@ function CampusGrid() {
 }
 
 /* ═══════════════════════════════════════════════
-   Satellite map hologram — Geisel-matched glow
+   Campus wireframe — glowing holographic blueprint
+   All lines use the same emissive style as Geisel
    ═══════════════════════════════════════════════ */
 
-function SatelliteBase() {
-  const texture = useTexture('/campus-map.png')
+function CampusWireframe() {
+  const segments = useMemo(() => {
+    const bright = []
+    const normal = []
+    const dim = []
 
-  const scanlineTex = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 4
-    canvas.height = 8
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, 4, 8)
-    ctx.fillStyle = 'rgba(0,0,0,0.22)'
-    ctx.fillRect(0, 0, 4, 1)
-    const tex = new THREE.CanvasTexture(canvas)
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    tex.repeat.set(CAMPUS_W * 2, CAMPUS_H * 2)
-    return tex
+    const poly = (arr, pts) => {
+      for (let i = 0; i < pts.length - 1; i++) arr.push([pts[i], pts[i + 1]])
+    }
+    const rect = (arr, cx, cz, w, d) => {
+      const hw = w / 2, hd = d / 2
+      arr.push([[cx - hw, cz - hd], [cx + hw, cz - hd]])
+      arr.push([[cx + hw, cz - hd], [cx + hw, cz + hd]])
+      arr.push([[cx + hw, cz + hd], [cx - hw, cz + hd]])
+      arr.push([[cx - hw, cz + hd], [cx - hw, cz - hd]])
+    }
+
+    /* ── Campus perimeter ── */
+    poly(bright, [
+      [-9, -8.5], [-6, -9.5], [-2.5, -9], [1, -8], [4, -7.5],
+      [6.5, -6], [7.5, -4], [7.5, -1.5], [7, 1], [6, 4],
+      [5, 6], [3, 8.5], [0, 10], [-3, 10.5], [-5.5, 9.5],
+      [-7.5, 7.5], [-8.5, 5.5], [-9.5, 3], [-10, 0],
+      [-9.5, -3], [-9, -6], [-9, -8.5],
+    ])
+
+    /* ── N Torrey Pines Road (west edge, N → S) ── */
+    poly(normal, [
+      [-9, -7], [-8.5, -5], [-8, -3], [-7.5, -1],
+      [-7.2, 1], [-7, 3], [-7, 5], [-7, 7], [-6.5, 9],
+    ])
+
+    /* ── Gilman Dr upper (NW → NE through north campus) ── */
+    poly(normal, [
+      [-8.5, -5.5], [-6, -6], [-3.5, -5.5], [-1, -6],
+      [1.5, -5.5], [4, -6], [6.5, -6.5],
+    ])
+
+    /* ── Voigt Dr (E-W through center) ── */
+    poly(normal, [
+      [-7.5, -1], [-5, -1.5], [-2.5, -1], [0, -1.5],
+      [2.5, -2], [5, -2.5], [7, -3],
+    ])
+
+    /* ── La Jolla Village Dr (southern E-W) ── */
+    poly(normal, [
+      [-8.5, 7], [-6, 7.5], [-3.5, 7], [-1, 7.5],
+      [2, 7], [4.5, 7.5], [7, 7],
+    ])
+
+    /* ── N-S east connector ── */
+    poly(normal, [
+      [6.5, -6.5], [6, -4.5], [5.5, -2.5], [5, -0.5],
+      [5, 1.5], [5, 3.5], [5, 5.5], [5, 7],
+    ])
+
+    /* ── Central N-S road ── */
+    poly(normal, [
+      [-0.5, -7], [-0.5, -5], [-0.5, -3], [0, -1],
+      [0, 1], [0, 3], [0, 5], [-0.5, 7],
+    ])
+
+    /* ── Gilman Dr south spur ── */
+    poly(normal, [
+      [0, -1], [1, 1], [2, 3], [3, 5], [3.5, 7],
+    ])
+
+    /* ── W connector (Muir → Marshall) ── */
+    poly(normal, [
+      [-7, 5], [-6, 3], [-5, 1], [-4.5, -0.5], [-5, -2],
+    ])
+
+    /* ── Library Walk ── */
+    poly(dim, [
+      [-3, 0.5], [-1.5, 0.7], [0, 0.8], [1.5, 0.7], [3, 0.5],
+    ])
+
+    /* ── Geisel cross-paths ── */
+    poly(dim, [[-1, -2], [-0.5, -0.5], [0, 1], [0, 2.5]])
+    poly(dim, [[-2, 0], [0, 0], [2, 0]])
+    poly(dim, [[1, -2.5], [1.5, -1], [2, 0.5]])
+
+    /* ── Warren → Geisel path ── */
+    poly(dim, [[2, -2], [1.5, -1], [1, 0], [0.5, 0.5]])
+
+    /* ── Marshall → Geisel path ── */
+    poly(dim, [[-4, -1], [-2.5, -0.5], [-1, 0]])
+
+    /* ── Muir → center path ── */
+    poly(dim, [[-6.5, 4.5], [-5, 3], [-3.5, 1.5], [-2, 0.5]])
+
+    /* ── ERC → RIMAC path ── */
+    poly(dim, [[-5.5, -5.5], [-3, -5.5], [-1, -5.8], [0, -5.9]])
+
+    /* ── Revelle → School of Medicine ── */
+    poly(dim, [[-4.5, 8], [-3.5, 6.5], [-3, 5.5]])
+
+    /* ── Building footprints ── */
+
+    /* Price Center cluster */
+    rect(bright, 2.0, 1.7, 1.5, 0.9)
+    rect(bright, 2.6, 2.5, 0.9, 0.5)
+    rect(bright, 1.2, 2.4, 0.7, 0.5)
+
+    /* Warren College cluster */
+    rect(bright, 2.0, -2.0, 1.3, 0.8)
+    rect(bright, 1.2, -2.8, 0.9, 0.6)
+    rect(bright, 3.0, -1.5, 0.7, 0.5)
+    rect(bright, 2.8, -2.6, 0.6, 0.5)
+
+    /* RIMAC area */
+    rect(bright, 0.3, -5.9, 2.0, 1.3)
+    rect(bright, 0.3, -7.0, 1.0, 0.6)
+
+    /* ERC cluster */
+    rect(bright, -5.9, -5.9, 1.3, 0.9)
+    rect(bright, -5.2, -5.0, 0.7, 0.5)
+    rect(bright, -6.6, -5.2, 0.6, 0.5)
+
+    /* Marshall College cluster */
+    rect(bright, -4.2, -1.1, 1.3, 0.8)
+    rect(bright, -3.4, -0.3, 0.7, 0.5)
+    rect(bright, -4.8, -0.3, 0.6, 0.5)
+
+    /* Muir College cluster */
+    rect(bright, -6.7, 4.5, 1.3, 0.9)
+    rect(bright, -6.0, 5.3, 0.8, 0.5)
+    rect(bright, -7.4, 3.8, 0.7, 0.5)
+
+    /* Sixth College cluster */
+    rect(bright, 3.6, 3.9, 1.3, 0.8)
+    rect(bright, 4.3, 4.6, 0.7, 0.6)
+    rect(bright, 2.8, 4.5, 0.6, 0.5)
+
+    /* Revelle College cluster */
+    rect(bright, -4.5, 8.4, 1.3, 0.9)
+    rect(bright, -3.8, 9.2, 0.8, 0.5)
+    rect(bright, -5.3, 9.0, 0.7, 0.5)
+
+    /* Seventh College */
+    rect(bright, 5.0, -4.2, 1.3, 0.8)
+    rect(bright, 5.7, -3.5, 0.6, 0.5)
+
+    /* Eighth College */
+    rect(bright, -2.0, -7.0, 1.1, 0.8)
+    rect(bright, -1.2, -7.7, 0.6, 0.5)
+
+    /* Geisel base footprint */
+    rect(bright, 0, 0, 1.0, 1.0)
+
+    /* Scattered campus buildings */
+    rect(normal, -3, 6, 1.4, 0.7)
+    rect(normal, -1, 2.5, 0.8, 0.5)
+    rect(normal, -1.5, 3.2, 0.7, 0.5)
+    rect(normal, 1.5, 2.8, 0.6, 0.5)
+    rect(normal, 0.5, -1.5, 0.6, 0.5)
+    rect(normal, -0.5, 0.5, 0.8, 0.5)
+    rect(normal, -2.5, 1.5, 0.7, 0.5)
+    rect(normal, -1.5, -0.5, 0.6, 0.5)
+    rect(normal, 3.5, -0.5, 0.7, 0.5)
+    rect(normal, 4.0, 1.0, 0.6, 0.5)
+    rect(normal, -3.5, -3, 0.7, 0.5)
+    rect(normal, -2, -4, 0.6, 0.5)
+    rect(normal, 1, -4, 0.7, 0.6)
+    rect(normal, 3, -3.5, 0.6, 0.5)
+    rect(normal, -5.5, 1.5, 0.7, 0.5)
+    rect(normal, -5, 7, 0.6, 0.5)
+    rect(normal, -2, 5, 0.7, 0.5)
+    rect(normal, 1, 5, 0.6, 0.5)
+    rect(normal, -1, 7.5, 0.7, 0.5)
+
+    return { bright, normal, dim }
   }, [])
 
-  const diag = CAMPUS_W * Math.SQRT2 / 2
+  const lines = useMemo(() => {
+    const compute = segs => segs.map(([from, to]) => {
+      const dx = to[0] - from[0], dz = to[1] - from[1]
+      return {
+        cx: (from[0] + to[0]) / 2,
+        cz: (from[1] + to[1]) / 2,
+        len: Math.sqrt(dx * dx + dz * dz),
+        rot: Math.atan2(dx, dz),
+      }
+    })
+    return {
+      bright: compute(segments.bright),
+      normal: compute(segments.normal),
+      dim: compute(segments.dim),
+    }
+  }, [segments])
 
   return (
-    <group position={[PLANE_OX, 0, PLANE_OZ]}>
-      {/* Glow halo underneath */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-        <planeGeometry args={[CAMPUS_W + 1.5, CAMPUS_H + 1.5]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.7}
-          transparent opacity={0.05} toneMapped={false} side={THREE.DoubleSide}
-        />
-      </mesh>
+    <group>
+      {/* Bright lines — perimeter + building outlines */}
+      {lines.bright.map((l, i) => (
+        <group key={`b-${i}`}>
+          <mesh position={[l.cx, 0.04, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.032, 0.018, l.len]} />
+            <meshStandardMaterial {...EDGE_MAT_PROPS} />
+          </mesh>
+          <mesh position={[l.cx, 0.04, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.08, 0.010, l.len]} />
+            <meshStandardMaterial
+              color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
+              transparent opacity={0.20} toneMapped={false}
+            />
+          </mesh>
+        </group>
+      ))}
 
-      {/* Campus map — detail visible, red holographic glow through features */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
-        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
-        <meshStandardMaterial
-          map={texture}
-          color="#303030"
-          emissive={ACCENT}
-          emissiveMap={texture}
-          emissiveIntensity={1.1}
-          transparent
-          opacity={0.48}
-          toneMapped={false}
-        />
-      </mesh>
+      {/* Normal lines — roads + scattered buildings */}
+      {lines.normal.map((l, i) => (
+        <group key={`n-${i}`}>
+          <mesh position={[l.cx, 0.035, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.026, 0.015, l.len]} />
+            <meshStandardMaterial {...EDGE_MAT_PROPS} />
+          </mesh>
+          <mesh position={[l.cx, 0.035, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.065, 0.008, l.len]} />
+            <meshStandardMaterial
+              color={ACCENT} emissive={ACCENT} emissiveIntensity={0.4}
+              transparent opacity={0.15} toneMapped={false}
+            />
+          </mesh>
+        </group>
+      ))}
 
-      {/* Scanline overlay */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.018, 0]}>
-        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
-        <meshBasicMaterial
-          map={scanlineTex}
-          transparent
-          opacity={0.10}
-          depthWrite={false}
-        />
-      </mesh>
-
-      {/* Edge glow border */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.016, 0]}>
-        <ringGeometry args={[diag - 0.3, diag + 0.1, 64]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8}
-          transparent opacity={0.10} toneMapped={false} side={THREE.DoubleSide}
-        />
-      </mesh>
+      {/* Dim lines — paths */}
+      {lines.dim.map((l, i) => (
+        <mesh key={`d-${i}`} position={[l.cx, 0.03, l.cz]} rotation={[0, l.rot, 0]}>
+          <boxGeometry args={[0.018, 0.012, l.len]} />
+          <meshStandardMaterial {...DIM_EDGE_PROPS} />
+        </mesh>
+      ))}
     </group>
   )
 }
@@ -774,9 +943,7 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
       <CampusLighting />
       <CampusCamera origin={origin} destination={destination} onTransitionDone={onTransitionDone} />
       <CampusGrid />
-      <Suspense fallback={null}>
-        <SatelliteBase />
-      </Suspense>
+      <CampusWireframe />
       <RouteLine origin={origin} destination={destination} />
       {LANDMARKS.map(lm => (
         <CampusBuilding
