@@ -39,282 +39,96 @@ class ModelErrorBoundary extends Component {
   render() { return this.state.error ? this.props.fallback : this.props.children }
 }
 
-function GeiselGLB() {
-  const { scene } = useGLTF('/models/geisel.glb')
-  return <primitive object={scene} />
-}
-
 /* ═══════════════════════════════════════════════
-   Procedural Geisel — futuristic glass + metal
+   Holographic Geisel — GLB geometry with custom
+   wireframe + transparent holographic materials
    ═══════════════════════════════════════════════ */
 
 const EDGE_MAT_PROPS = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 1.8, toneMapped: false }
 const DIM_EDGE_PROPS = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 0.9, toneMapped: false, transparent: true, opacity: 0.5 }
-const STRUT_MAT_PROPS = { color: '#1e2e3e', metalness: 0.95, roughness: 0.12 }
 
-function hexEdgeSegments(radius) {
-  const edges = []
-  for (let i = 0; i < 6; i++) {
-    const a1 = (i * Math.PI) / 3
-    const a2 = ((i + 1) * Math.PI) / 3
-    const x1 = radius * Math.sin(a1), z1 = radius * Math.cos(a1)
-    const x2 = radius * Math.sin(a2), z2 = radius * Math.cos(a2)
-    const dx = x2 - x1, dz = z2 - z1
-    edges.push({
-      cx: (x1 + x2) / 2,
-      cz: (z1 + z2) / 2,
-      len: Math.sqrt(dx * dx + dz * dz),
-      rot: Math.atan2(dx, dz),
+const holoFaceMat = new THREE.MeshStandardMaterial({
+  color: '#0a0a12',
+  emissive: new THREE.Color(ACCENT),
+  emissiveIntensity: 0.15,
+  transparent: true,
+  opacity: 0.18,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  toneMapped: false,
+})
+
+const holoWireMat = new THREE.MeshStandardMaterial({
+  color: ACCENT,
+  emissive: new THREE.Color(ACCENT),
+  emissiveIntensity: 1.8,
+  wireframe: true,
+  toneMapped: false,
+})
+
+function HolographicGeisel() {
+  const { scene } = useGLTF('/models/geisel.glb')
+  const groupRef = useRef()
+  const matsRef = useRef({ face: null, wire: null })
+
+  const hologram = useMemo(() => {
+    const root = scene.clone(true)
+
+    root.traverse((child) => {
+      if (!child.isMesh) return
+
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose && m.dispose())
+        } else {
+          child.material.dispose && child.material.dispose()
+        }
+      }
+      child.material = holoFaceMat
     })
-  }
-  return edges
-}
 
-function ColumnStrut({ from, to, radius = 0.07 }) {
-  const { pos, quat, len } = useMemo(() => {
-    const f = new THREE.Vector3(...from)
-    const t = new THREE.Vector3(...to)
-    return {
-      pos: f.clone().add(t).multiplyScalar(0.5),
-      quat: new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, 1, 0),
-        t.clone().sub(f).normalize()
-      ),
-      len: f.distanceTo(t),
-    }
-  }, [from, to])
+    return root
+  }, [scene])
 
-  return (
-    <group position={pos} quaternion={quat}>
-      <mesh>
-        <cylinderGeometry args={[radius * 0.7, radius, len, 6]} />
-        <meshStandardMaterial {...STRUT_MAT_PROPS} />
-      </mesh>
-      <mesh>
-        <cylinderGeometry args={[radius * 0.72, radius * 1.02, len * 1.002, 6]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.7}
-          wireframe toneMapped={false} transparent opacity={0.35}
-        />
-      </mesh>
-    </group>
-  )
-}
-
-function GlowStrut({ from, to, radius = 0.025 }) {
-  const { pos, quat, len } = useMemo(() => {
-    const f = new THREE.Vector3(...from)
-    const t = new THREE.Vector3(...to)
-    return {
-      pos: f.clone().add(t).multiplyScalar(0.5),
-      quat: new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, 1, 0),
-        t.clone().sub(f).normalize()
-      ),
-      len: f.distanceTo(t),
-    }
-  }, [from, to])
-
-  return (
-    <mesh position={pos} quaternion={quat}>
-      <cylinderGeometry args={[radius, radius, len, 4]} />
-      <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} toneMapped={false} />
-    </mesh>
-  )
-}
-
-function ProceduralGeisel() {
-  const g = useRef()
+  const wireClone = useMemo(() => {
+    const root = scene.clone(true)
+    root.traverse((child) => {
+      if (!child.isMesh) return
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose && m.dispose())
+        } else {
+          child.material.dispose && child.material.dispose()
+        }
+      }
+      child.material = holoWireMat
+    })
+    return root
+  }, [scene])
 
   useFrame(({ clock }) => {
-    if (g.current) g.current.position.y = Math.sin(clock.elapsedTime * 0.3) * 0.04
+    if (!groupRef.current) return
+    const pulse = 0.15 + Math.sin(clock.elapsedTime * 0.6) * 0.06
+    holoFaceMat.emissiveIntensity = pulse
+    const wirePulse = 1.6 + Math.sin(clock.elapsedTime * 0.8) * 0.25
+    holoWireMat.emissiveIntensity = wirePulse
+    groupRef.current.position.y = Math.sin(clock.elapsedTime * 0.3) * 0.04
   })
 
-  const tiers = useMemo(() => [
-    { r: 1.55, y: 1.94, h: 0.22 },
-    { r: 2.00, y: 2.39, h: 0.22 },
-    { r: 2.45, y: 2.84, h: 0.22 },
-    { r: 2.90, y: 3.29, h: 0.22 },
-    { r: 3.30, y: 3.74, h: 0.22 },
-    { r: 3.65, y: 4.19, h: 0.22 },
-  ], [])
-
-  const tierEdges = useMemo(
-    () => tiers.map(t => hexEdgeSegments(t.r)),
-    [tiers]
-  )
-
-  const outerColumns = useMemo(() => {
-    const cols = []
-    const baseR = 1.80, topR = 1.55, baseY = 0.12, topY = 1.81
-    for (let i = 0; i < 12; i++) {
-      const angle = (i * Math.PI) / 6
-      cols.push({
-        from: [baseR * Math.sin(angle), baseY, baseR * Math.cos(angle)],
-        to:   [topR  * Math.sin(angle), topY,  topR  * Math.cos(angle)],
-      })
-    }
-    return cols
-  }, [])
-
-  const innerColumns = useMemo(() => {
-    const cols = []
-    const baseR = 0.70, topR = 0.65, baseY = 0.12, topY = 1.81
-    for (let i = 0; i < 6; i++) {
-      const angle = (i + 0.5) * Math.PI / 3
-      cols.push({
-        from: [baseR * Math.sin(angle), baseY, baseR * Math.cos(angle)],
-        to:   [topR  * Math.sin(angle), topY,  topR  * Math.cos(angle)],
-      })
-    }
-    return cols
-  }, [])
-
-  const vBeams = useMemo(() => {
-    const beams = []
-    for (let ti = 0; ti < tiers.length - 1; ti++) {
-      const lo = tiers[ti], hi = tiers[ti + 1]
-      const loTopY = lo.y + lo.h / 2
-      const hiBotY = hi.y - hi.h / 2
-      for (let j = 0; j < 6; j++) {
-        const aL = (j * Math.PI) / 3
-        const aR = ((j + 1) * Math.PI) / 3
-        const aMid = ((j + 0.5) * Math.PI) / 3
-        const apex = [lo.r * Math.sin(aMid), loTopY, lo.r * Math.cos(aMid)]
-        beams.push(
-          { from: apex, to: [hi.r * Math.sin(aL), hiBotY, hi.r * Math.cos(aL)] },
-          { from: apex, to: [hi.r * Math.sin(aR), hiBotY, hi.r * Math.cos(aR)] },
-        )
-      }
-    }
-    return beams
-  }, [tiers])
-
-  const vertexStruts = useMemo(() => {
-    const struts = []
-    for (let ti = 0; ti < tiers.length - 1; ti++) {
-      const lo = tiers[ti], hi = tiers[ti + 1]
-      const loTopY = lo.y + lo.h / 2
-      const hiBotY = hi.y - hi.h / 2
-      for (let j = 0; j < 6; j++) {
-        const a = (j * Math.PI) / 3
-        struts.push({
-          from: [lo.r * Math.sin(a), loTopY, lo.r * Math.cos(a)],
-          to:   [hi.r * Math.sin(a), hiBotY, hi.r * Math.cos(a)],
-        })
-      }
-    }
-    return struts
-  }, [tiers])
-
-  const roofEdges = useMemo(() => hexEdgeSegments(3.45), [])
-  const baseEdges = useMemo(() => hexEdgeSegments(2.50), [])
-
   return (
-    <group ref={g}>
-      {/* ── Wide base platform (plaza foundation) ── */}
-      <mesh position={[0, 0.04, 0]}>
-        <cylinderGeometry args={[2.50, 2.50, 0.08, 6]} />
-        <meshStandardMaterial color="#0c0c1a" metalness={0.85} roughness={0.25} />
-      </mesh>
-      {baseEdges.map((e, i) => (
-        <mesh key={`base-${i}`} position={[e.cx, 0.08, e.cz]} rotation={[0, e.rot, 0]}>
-          <boxGeometry args={[0.022, 0.014, e.len]} />
-          <meshStandardMaterial {...EDGE_MAT_PROPS} />
-        </mesh>
-      ))}
-
-      {/* ── 12 outer support columns (wide perimeter, NOT converging) ── */}
-      {outerColumns.map((c, i) => (
-        <ColumnStrut key={`oc-${i}`} from={c.from} to={c.to} radius={0.10} />
-      ))}
-
-      {/* ── 6 inner support columns (nearly vertical) ── */}
-      {innerColumns.map((c, i) => (
-        <ColumnStrut key={`ic-${i}`} from={c.from} to={c.to} radius={0.07} />
-      ))}
-
-      {/* ── Hexagonal floor tiers — inverted pyramid ── */}
-      {tiers.map((t, ti) => (
-        <group key={`tier-${ti}`}>
-          <mesh position={[0, t.y, 0]}>
-            <cylinderGeometry args={[t.r, t.r, t.h, 6]} />
-            <meshPhysicalMaterial
-              color="#152535" metalness={0.25} roughness={0.08}
-              transparent opacity={0.55}
-            />
-          </mesh>
-
-          {/* Top perimeter edge glow */}
-          {tierEdges[ti].map((e, ei) => (
-            <mesh key={`top-${ei}`} position={[e.cx, t.y + t.h / 2, e.cz]} rotation={[0, e.rot, 0]}>
-              <boxGeometry args={[0.026, 0.016, e.len]} />
-              <meshStandardMaterial {...EDGE_MAT_PROPS} />
-            </mesh>
-          ))}
-
-          {/* Bottom perimeter edge glow */}
-          {tierEdges[ti].map((e, ei) => (
-            <mesh key={`bot-${ei}`} position={[e.cx, t.y - t.h / 2, e.cz]} rotation={[0, e.rot, 0]}>
-              <boxGeometry args={[0.026, 0.016, e.len]} />
-              <meshStandardMaterial {...EDGE_MAT_PROPS} />
-            </mesh>
-          ))}
-
-          {/* Mid-height window band line */}
-          {tierEdges[ti].map((e, ei) => (
-            <mesh key={`mid-${ei}`} position={[e.cx, t.y, e.cz]} rotation={[0, e.rot, 0]}>
-              <boxGeometry args={[0.018, 0.010, e.len]} />
-              <meshStandardMaterial {...DIM_EDGE_PROPS} />
-            </mesh>
-          ))}
-
-          {/* Vertical corner edges */}
-          {Array.from({ length: 6 }).map((_, vi) => {
-            const a = (vi * Math.PI) / 3
-            return (
-              <mesh key={`v-${vi}`} position={[t.r * Math.sin(a), t.y, t.r * Math.cos(a)]}>
-                <boxGeometry args={[0.016, t.h, 0.016]} />
-                <meshStandardMaterial {...EDGE_MAT_PROPS} />
-              </mesh>
-            )
-          })}
-        </group>
-      ))}
-
-      {/* ── V-shaped structural beams between tiers ── */}
-      {vBeams.map((b, i) => (
-        <GlowStrut key={`vb-${i}`} from={b.from} to={b.to} />
-      ))}
-
-      {/* ── Vertex-to-vertex framing struts between tiers ── */}
-      {vertexStruts.map((s, i) => (
-        <GlowStrut key={`vs-${i}`} from={s.from} to={s.to} radius={0.018} />
-      ))}
-
-      {/* ── Roof cap ── */}
-      <mesh position={[0, 4.39, 0]}>
-        <cylinderGeometry args={[3.45, 3.45, 0.06, 6]} />
-        <meshStandardMaterial color="#1e2e3e" metalness={0.60} roughness={0.10} />
-      </mesh>
-      {roofEdges.map((e, i) => (
-        <mesh key={`roof-${i}`} position={[e.cx, 4.42, e.cz]} rotation={[0, e.rot, 0]}>
-          <boxGeometry args={[0.026, 0.016, e.len]} />
-          <meshStandardMaterial {...EDGE_MAT_PROPS} />
-        </mesh>
-      ))}
-
-      {/* Inner glow */}
-      <pointLight position={[0, 2.90, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
+    <group ref={groupRef}>
+      <primitive object={hologram} />
+      <primitive object={wireClone} />
+      <pointLight position={[0, 2.5, 0]} color={ACCENT} intensity={3} distance={8} decay={2} />
     </group>
   )
 }
 
 function GeiselModel() {
   return (
-    <ModelErrorBoundary fallback={<ProceduralGeisel />}>
-      <Suspense fallback={<ProceduralGeisel />}>
-        <GeiselGLB />
+    <ModelErrorBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <HolographicGeisel />
       </Suspense>
     </ModelErrorBoundary>
   )
@@ -861,6 +675,40 @@ function CampusBuilding({ landmark, selected, onSelect }) {
         <group scale={[GEISEL_SCALE, GEISEL_SCALE, GEISEL_SCALE]}>
           <GeiselModel />
         </group>
+
+        {/* Holographic projection beams — vertical lines from base to grid */}
+        {[0, 1, 2, 3, 4, 5].map(i => {
+          const a = (i * Math.PI) / 3
+          const r = 0.55
+          return (
+            <mesh key={`proj-${i}`} position={[r * Math.sin(a), -0.02, r * Math.cos(a)]}>
+              <cylinderGeometry args={[0.008, 0.003, 0.12, 4]} />
+              <meshStandardMaterial
+                color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2}
+                transparent opacity={0.25} toneMapped={false}
+              />
+            </mesh>
+          )
+        })}
+
+        {/* Central projection beam */}
+        <mesh position={[0, -0.02, 0]}>
+          <cylinderGeometry args={[0.015, 0.006, 0.12, 6]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT} emissiveIntensity={1.5}
+            transparent opacity={0.30} toneMapped={false}
+          />
+        </mesh>
+
+        {/* Base glow ring */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+          <ringGeometry args={[0.50, 0.65, 32]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT} emissiveIntensity={1.5}
+            transparent opacity={0.12} toneMapped={false} side={THREE.DoubleSide}
+          />
+        </mesh>
+
         {/* Invisible click target */}
         <mesh onClick={handleClick}
           onPointerOver={() => setHovered(true)}
