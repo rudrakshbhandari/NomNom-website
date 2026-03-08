@@ -981,7 +981,7 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
       return
     }
 
-    angle.current += 0.0012
+    angle.current += 0.0025
     camera.position.set(
       Math.sin(angle.current) * 24,
       15,
