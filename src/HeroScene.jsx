@@ -3,7 +3,7 @@ import {
   Suspense, Component,
 } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Html } from '@react-three/drei'
+import { useGLTF, Html, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════════
@@ -321,45 +321,52 @@ function GeiselModel() {
 }
 
 /* ═══════════════════════════════════════════════
-   Campus landmarks — approximate UCSD positions
-   1 unit ≈ 50 meters
+   Campus layout — satellite image–anchored
+   Image: 1024×594 → plane 34×20 units
+   Positions mapped from pixel locations on aerial photo
    ═══════════════════════════════════════════════ */
 
 const METERS_PER_UNIT = 50
 const GEISEL_SCALE = 0.15
+const CAMPUS_W = 34
+const CAMPUS_H = 20
 
 const LANDMARKS = [
-  { id: 'geisel',   name: 'Geisel Library',   x:  0,    z:  0,    w: 0, d: 0, h: 0, isGeisel: true },
-  { id: 'price',    name: 'Price Center',      x: -3.5,  z:  1.5,  w: 2.5, d: 1.8, h: 0.55 },
-  { id: 'sixth',    name: 'Sixth College',     x:  3.5,  z: -9,    w: 2.0, d: 2.0, h: 0.50 },
-  { id: 'seventh',  name: 'Seventh College',   x:  7,    z: -2,    w: 2.0, d: 1.5, h: 0.45 },
-  { id: 'eighth',   name: 'Eighth College',    x:  4,    z: -6.5,  w: 1.8, d: 1.5, h: 0.45 },
-  { id: 'rimac',    name: 'RIMAC',             x:  1.5,  z: -13,   w: 3.0, d: 2.0, h: 0.70 },
-  { id: 'revelle',  name: 'Revelle College',   x: -5,    z:  6,    w: 2.0, d: 2.0, h: 0.50 },
-  { id: 'muir',     name: 'Muir College',      x: -5,    z: -0.5,  w: 2.0, d: 1.5, h: 0.45 },
-  { id: 'marshall', name: 'Marshall College',   x:  6,    z:  4,    w: 2.0, d: 1.8, h: 0.50 },
-  { id: 'erc',      name: 'ERC',               x: -6,    z: -6.5,  w: 2.0, d: 1.5, h: 0.50 },
-  { id: 'warren',   name: 'Warren College',    x:  6,    z: -3.5,  w: 2.0, d: 1.5, h: 0.50 },
-  { id: 'libwalk',  name: 'Library Walk',      x:  0,    z:  3,    w: 0.15, d: 5, h: 0.02 },
+  { id: 'geisel',   name: 'Geisel Library',    x: -3.1,  z:  0.4,  w: 0, d: 0, h: 0, isGeisel: true },
+  { id: 'price',    name: 'Price Center',       x:  3.9,  z: -2.6,  w: 1.6, d: 1.2, h: 0.30 },
+  { id: 'sixth',    name: 'Sixth College',      x: -4.7,  z: -7.0,  w: 1.4, d: 1.4, h: 0.28 },
+  { id: 'seventh',  name: 'Seventh College',    x: 10.9,  z: -6.5,  w: 1.4, d: 1.1, h: 0.25 },
+  { id: 'eighth',   name: 'Eighth College',     x:-14.0,  z: -5.6,  w: 1.3, d: 1.3, h: 0.25 },
+  { id: 'rimac',    name: 'RIMAC',              x:  8.9,  z: -1.1,  w: 1.8, d: 1.3, h: 0.35 },
+  { id: 'revelle',  name: 'Revelle College',    x:  3.3,  z: -6.5,  w: 1.4, d: 1.4, h: 0.28 },
+  { id: 'muir',     name: 'Muir College',       x:-13.0,  z: -1.6,  w: 1.4, d: 1.1, h: 0.25 },
+  { id: 'marshall', name: 'Marshall College',    x:  6.9,  z:  6.3,  w: 1.4, d: 1.2, h: 0.28 },
+  { id: 'erc',      name: 'ERC',                x:  0.6,  z: -6.5,  w: 1.3, d: 1.1, h: 0.25 },
+  { id: 'warren',   name: 'Warren College',     x: -5.7,  z: -2.3,  w: 1.4, d: 1.1, h: 0.25 },
+  { id: 'libwalk',  name: 'Library Walk',       x: -2.1,  z:  1.4,  w: 0.10, d: 4, h: 0.015 },
 ]
 
 /* ═══════════════════════════════════════════════
-   Holographic campus grid
+   Holographic grid — underneath the satellite plane
    ═══════════════════════════════════════════════ */
 
 function CampusGrid() {
+  const gridHalfW = CAMPUS_W / 2 + 2
+  const gridHalfH = CAMPUS_H / 2 + 2
+
   const gridGeo = useMemo(() => {
     const pts = []
     const colors = []
-    const half = 20
     const c = new THREE.Color(ACCENT)
-    for (let i = -half; i <= half; i++) {
-      const fade = 1 - Math.abs(i) / half
-      const a = fade * 0.35
-      pts.push(-half, 0, i, half, 0, i)
-      colors.push(c.r, c.g, c.b, a, c.r, c.g, c.b, a)
-      pts.push(i, 0, -half, i, 0, half)
-      colors.push(c.r, c.g, c.b, a, c.r, c.g, c.b, a)
+    for (let x = -gridHalfW; x <= gridHalfW; x += 1) {
+      const fadeX = 1 - Math.abs(x) / gridHalfW
+      pts.push(x, 0, -gridHalfH, x, 0, gridHalfH)
+      colors.push(c.r, c.g, c.b, fadeX * 0.3, c.r, c.g, c.b, fadeX * 0.3)
+    }
+    for (let z = -gridHalfH; z <= gridHalfH; z += 1) {
+      const fadeZ = 1 - Math.abs(z) / gridHalfH
+      pts.push(-gridHalfW, 0, z, gridHalfW, 0, z)
+      colors.push(c.r, c.g, c.b, fadeZ * 0.3, c.r, c.g, c.b, fadeZ * 0.3)
     }
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
@@ -369,32 +376,88 @@ function CampusGrid() {
 
   return (
     <group>
+      {/* Grid lines */}
       <lineSegments geometry={gridGeo}>
-        <lineBasicMaterial vertexColors transparent opacity={0.12} />
+        <lineBasicMaterial vertexColors transparent opacity={0.10} />
       </lineSegments>
 
-      {/* Perimeter glow ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-        <ringGeometry args={[19, 20, 64]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.6}
-          transparent opacity={0.10} toneMapped={false} side={THREE.DoubleSide}
-        />
+      {/* Perimeter glow — outer */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
+        <planeGeometry args={[CAMPUS_W + 4.5, CAMPUS_H + 4.5]} />
+        <meshStandardMaterial color="#000" transparent opacity={0} />
       </mesh>
-
-      {/* Inner glow ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
-        <ringGeometry args={[18.5, 19, 64]} />
+        <ringGeometry args={[Math.max(gridHalfW, gridHalfH) - 0.5, Math.max(gridHalfW, gridHalfH), 64]} />
         <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.3}
-          transparent opacity={0.06} toneMapped={false} side={THREE.DoubleSide}
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
+          transparent opacity={0.08} toneMapped={false} side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Ground plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <circleGeometry args={[20, 64]} />
-        <meshStandardMaterial color="#020204" metalness={0.95} roughness={0.4} />
+      {/* Dark ground underneath everything */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
+        <planeGeometry args={[CAMPUS_W + 8, CAMPUS_H + 8]} />
+        <meshStandardMaterial color="#010103" metalness={0.95} roughness={0.4} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ═══════════════════════════════════════════════
+   Satellite image base — holographic projection
+   ═══════════════════════════════════════════════ */
+
+function SatelliteBase() {
+  const texture = useTexture('/campus-aerial.png')
+
+  const scanlineTex = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 4
+    canvas.height = 8
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, 4, 8)
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'
+    ctx.fillRect(0, 0, 4, 1)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(CAMPUS_W * 2, CAMPUS_H * 12)
+    return tex
+  }, [])
+
+  return (
+    <group>
+      {/* Satellite image plane — red-tinted hologram */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
+        <meshStandardMaterial
+          map={texture}
+          color="#cc3030"
+          transparent
+          opacity={0.42}
+          emissive="#1a0404"
+          emissiveIntensity={0.4}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Scanline overlay */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
+        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
+        <meshBasicMaterial
+          map={scanlineTex}
+          transparent
+          opacity={0.18}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Edge glow border around satellite plane */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <planeGeometry args={[CAMPUS_W + 0.15, CAMPUS_H + 0.15]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2}
+          transparent opacity={0.08} toneMapped={false} side={THREE.DoubleSide}
+        />
       </mesh>
     </group>
   )
@@ -573,7 +636,7 @@ function RouteLine({ origin, destination }) {
     if (!o || !d) return null
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute([
-      o.x, 0.04, o.z, d.x, 0.04, d.z,
+      o.x, 0.06, o.z, d.x, 0.06, d.z,
     ], 3))
     return g
   }, [origin, destination])
@@ -634,7 +697,7 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
       const curLook = targetLook.current.clone()
       startLook.current.copy(curLook)
       const a = angle.current
-      targetPos.current.set(Math.sin(a) * 28, 22, Math.cos(a) * 28)
+      targetPos.current.set(Math.sin(a) * 32, 26, Math.cos(a) * 32)
       targetLook.current.set(0, 0, 0)
     }
 
@@ -666,11 +729,11 @@ function CampusCamera({ origin, destination, onTransitionDone }) {
       return
     }
 
-    angle.current += 0.0012
+    angle.current += 0.0010
     camera.position.set(
-      Math.sin(angle.current) * 28,
-      22,
-      Math.cos(angle.current) * 28
+      Math.sin(angle.current) * 32,
+      26,
+      Math.cos(angle.current) * 32
     )
     camera.lookAt(0, 0, 0)
   })
@@ -701,10 +764,13 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
   return (
     <>
       <color attach="background" args={['#000000']} />
-      <fog attach="fog" args={['#000000', 30, 55]} />
+      <fog attach="fog" args={['#000000', 35, 65]} />
       <CampusLighting />
       <CampusCamera origin={origin} destination={destination} onTransitionDone={onTransitionDone} />
       <CampusGrid />
+      <Suspense fallback={null}>
+        <SatelliteBase />
+      </Suspense>
       <RouteLine origin={origin} destination={destination} />
       {LANDMARKS.map(lm => (
         <CampusBuilding
@@ -936,7 +1002,7 @@ export default function HeroScene() {
         <div style={{ position: 'absolute', inset: 0 }}>
           <Canvas
             dpr={[1, 1.5]}
-            camera={{ position: [0, 22, 28], fov: 42, near: 0.1, far: 200 }}
+            camera={{ position: [0, 26, 32], fov: 42, near: 0.1, far: 200 }}
             style={{ width: '100%', height: '100%' }}
           >
             <CampusSceneContent
