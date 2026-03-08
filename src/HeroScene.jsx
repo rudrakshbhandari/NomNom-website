@@ -446,12 +446,68 @@ function CampusGrid() {
         />
       </mesh>
 
+      {/* Red particles evaporating from bottom — floating effect */}
+      <EvaporatingParticles />
+
       {/* Dark ground plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
         <circleGeometry args={[28, 64]} />
         <meshStandardMaterial color="#020204" metalness={0.95} roughness={0.4} />
       </mesh>
     </group>
+  )
+}
+
+function EvaporatingParticles() {
+  const count = 280
+  const positions = useMemo(() => {
+    const hw = MAP_W / 2
+    const hh = MAP_H / 2
+    const pts = new Float32Array(count * 3)
+    const rng = seededRng('evap')
+    for (let i = 0; i < count; i++) {
+      const side = Math.floor(rng() * 4)
+      let x, z
+      if (side === 0) { x = (rng() - 0.5) * MAP_W; z = -hh - rng() * 0.4 }
+      else if (side === 1) { x = hw + rng() * 0.4; z = (rng() - 0.5) * MAP_H }
+      else if (side === 2) { x = (rng() - 0.5) * MAP_W; z = hh + rng() * 0.4 }
+      else { x = -hw - rng() * 0.4; z = (rng() - 0.5) * MAP_H }
+      pts[i * 3] = x
+      pts[i * 3 + 1] = -0.3 - rng() * 0.6
+      pts[i * 3 + 2] = z
+    }
+    return pts
+  }, [])
+  const ref = useRef(null)
+  useFrame((_, delta) => {
+    if (!ref.current) return
+    const pos = ref.current.geometry.attributes.position.array
+    for (let i = 0; i < count; i++) {
+      pos[i * 3 + 1] += delta * 0.6 + 0.002
+      if (pos[i * 3 + 1] > 1.2) pos[i * 3 + 1] = -0.5 - Math.random() * 0.5
+    }
+    ref.current.geometry.attributes.position.needsUpdate = true
+  })
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.12}
+        color={ACCENT}
+        transparent
+        opacity={0.45}
+        sizeAttenuation
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
   )
 }
 
