@@ -3,7 +3,7 @@ import {
   Suspense, Component,
 } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF } from '@react-three/drei'
+import { useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════════
@@ -321,206 +321,491 @@ function GeiselModel() {
 }
 
 /* ═══════════════════════════════════════════════
-   Ground
+   Campus landmarks — approximate UCSD positions
+   1 unit ≈ 50 meters
    ═══════════════════════════════════════════════ */
 
-function Ground() {
+const METERS_PER_UNIT = 50
+const GEISEL_SCALE = 0.15
+
+const LANDMARKS = [
+  { id: 'geisel',   name: 'Geisel Library',   x:  0,    z:  0,    w: 0, d: 0, h: 0, isGeisel: true },
+  { id: 'price',    name: 'Price Center',      x: -3.5,  z:  1.5,  w: 2.5, d: 1.8, h: 0.55 },
+  { id: 'sixth',    name: 'Sixth College',     x:  3.5,  z: -9,    w: 2.0, d: 2.0, h: 0.50 },
+  { id: 'seventh',  name: 'Seventh College',   x:  7,    z: -2,    w: 2.0, d: 1.5, h: 0.45 },
+  { id: 'eighth',   name: 'Eighth College',    x:  4,    z: -6.5,  w: 1.8, d: 1.5, h: 0.45 },
+  { id: 'rimac',    name: 'RIMAC',             x:  1.5,  z: -13,   w: 3.0, d: 2.0, h: 0.70 },
+  { id: 'revelle',  name: 'Revelle College',   x: -5,    z:  6,    w: 2.0, d: 2.0, h: 0.50 },
+  { id: 'muir',     name: 'Muir College',      x: -5,    z: -0.5,  w: 2.0, d: 1.5, h: 0.45 },
+  { id: 'marshall', name: 'Marshall College',   x:  6,    z:  4,    w: 2.0, d: 1.8, h: 0.50 },
+  { id: 'erc',      name: 'ERC',               x: -6,    z: -6.5,  w: 2.0, d: 1.5, h: 0.50 },
+  { id: 'warren',   name: 'Warren College',    x:  6,    z: -3.5,  w: 2.0, d: 1.5, h: 0.50 },
+  { id: 'libwalk',  name: 'Library Walk',      x:  0,    z:  3,    w: 0.15, d: 5, h: 0.02 },
+]
+
+/* ═══════════════════════════════════════════════
+   Holographic campus grid
+   ═══════════════════════════════════════════════ */
+
+function CampusGrid() {
+  const gridGeo = useMemo(() => {
+    const pts = []
+    const colors = []
+    const half = 20
+    const c = new THREE.Color(ACCENT)
+    for (let i = -half; i <= half; i++) {
+      const fade = 1 - Math.abs(i) / half
+      const a = fade * 0.35
+      pts.push(-half, 0, i, half, 0, i)
+      colors.push(c.r, c.g, c.b, a, c.r, c.g, c.b, a)
+      pts.push(i, 0, -half, i, 0, half)
+      colors.push(c.r, c.g, c.b, a, c.r, c.g, c.b, a)
+    }
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
+    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4))
+    return g
+  }, [])
+
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-      <planeGeometry args={[120, 120]} />
-      <meshStandardMaterial color="#07070f" metalness={0.88} roughness={0.35} />
-    </mesh>
+    <group>
+      <lineSegments geometry={gridGeo}>
+        <lineBasicMaterial vertexColors transparent opacity={0.12} />
+      </lineSegments>
+
+      {/* Perimeter glow ring */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+        <ringGeometry args={[19, 20, 64]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.6}
+          transparent opacity={0.10} toneMapped={false} side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Inner glow ring */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
+        <ringGeometry args={[18.5, 19, 64]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.3}
+          transparent opacity={0.06} toneMapped={false} side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Ground plane */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <circleGeometry args={[20, 64]} />
+        <meshStandardMaterial color="#020204" metalness={0.95} roughness={0.4} />
+      </mesh>
+    </group>
   )
 }
 
 /* ═══════════════════════════════════════════════
-   Lighting (ramps up when cinematic starts)
+   Abstract holographic campus building
    ═══════════════════════════════════════════════ */
 
-function SceneLighting({ active }) {
-  const amb = useRef()
-  const dir = useRef()
-  const spot = useRef()
-
-  useFrame(() => {
-    const t = active ? 1 : 0
-    if (amb.current) amb.current.intensity += ((0.12 + t * 0.38) - amb.current.intensity) * 0.025
-    if (dir.current) dir.current.intensity += ((0.08 + t * 0.82) - dir.current.intensity) * 0.025
-    if (spot.current) spot.current.intensity += ((t * 1.6) - spot.current.intensity) * 0.025
-  })
-
-  return (
-    <>
-      <ambientLight ref={amb} intensity={0.12} color="#aaccff" />
-      <directionalLight ref={dir} position={[10, 16, 8]} intensity={0.08} color="#ddeeff" />
-      <spotLight ref={spot} position={[0, 22, 0]} angle={0.35} penumbra={0.85} intensity={0} color="#88bbff" />
-    </>
-  )
-}
-
-/* ═══════════════════════════════════════════════
-   Cinematic camera
-   ═══════════════════════════════════════════════ */
-
-function CinematicCamera({ active, onComplete }) {
-  const { camera } = useThree()
-  const curve = useMemo(() => new THREE.CatmullRomCurve3(CAMERA_CURVE_PTS), [])
-  const t0 = useRef(null)
-  const done = useRef(false)
-  const lookAt = useRef(new THREE.Vector3(0, 3.5, 0))
+function CampusBuilding({ landmark, selected, onSelect }) {
+  const { id, x, z, w, d, h, isGeisel, name } = landmark
+  const groupRef = useRef()
+  const [hovered, setHovered] = useState(false)
+  const bobOffset = useMemo(() => x * 1.7 + z * 0.9, [x, z])
 
   useFrame(({ clock }) => {
-    if (!active) {
-      camera.position.set(3, 4.5, -3)
-      camera.lookAt(0, 3.5, 0)
+    if (groupRef.current && !isGeisel) {
+      groupRef.current.position.y = h / 2 + 0.06 + Math.sin(clock.elapsedTime * 1.2 + bobOffset) * 0.015
+    }
+  })
+
+  const handleClick = useCallback((e) => {
+    e.stopPropagation()
+    onSelect(id)
+  }, [onSelect, id])
+
+  if (isGeisel) {
+    return (
+      <group position={[x, 0.06, z]}>
+        <group scale={[GEISEL_SCALE, GEISEL_SCALE, GEISEL_SCALE]}>
+          <GeiselModel />
+        </group>
+        {/* Invisible click target */}
+        <mesh onClick={handleClick}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+        >
+          <cylinderGeometry args={[1, 1, 1.2, 8]} />
+          <meshStandardMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        {selected && (
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+            <ringGeometry args={[0.9, 1.05, 32]} />
+            <meshStandardMaterial
+              color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
+              transparent opacity={0.45} toneMapped={false} side={THREE.DoubleSide}
+            />
+          </mesh>
+        )}
+        {/* Vertical beam */}
+        <mesh position={[0, 0.95, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.7, 4]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
+            transparent opacity={selected ? 0.5 : 0.2} toneMapped={false}
+          />
+        </mesh>
+        {/* Marker sphere */}
+        <mesh position={[0, 1.35, 0]}>
+          <sphereGeometry args={[0.07, 8, 8]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT}
+            emissiveIntensity={selected ? 3 : 1.5} toneMapped={false}
+          />
+        </mesh>
+        <pointLight position={[0, 1.35, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={3} />
+        <Html center position={[0, 1.65, 0]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+            textShadow: '0 0 10px rgba(255,45,45,0.5)',
+            opacity: selected || hovered ? 1 : 0.7,
+          }}>{name}</div>
+        </Html>
+      </group>
+    )
+  }
+
+  if (id === 'libwalk') {
+    return (
+      <group position={[x, 0.02, z]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[w, d]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT} emissiveIntensity={0.6}
+            transparent opacity={0.08} toneMapped={false} side={THREE.DoubleSide}
+          />
+        </mesh>
+        <Html center position={[0, 0.4, 0]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
+            textShadow: '0 0 8px rgba(255,45,45,0.3)', opacity: 0.5,
+          }}>{name}</div>
+        </Html>
+      </group>
+    )
+  }
+
+  const ringR = Math.max(w, d) * 0.65
+
+  return (
+    <group ref={groupRef} position={[x, h / 2 + 0.06, z]}>
+      {/* Solid fill */}
+      <mesh onClick={handleClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial
+          color={ACCENT} transparent
+          opacity={selected ? 0.14 : hovered ? 0.08 : 0.04}
+          metalness={0.85} roughness={0.15}
+        />
+      </mesh>
+      {/* Wireframe */}
+      <mesh>
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial
+          color={ACCENT} wireframe transparent
+          opacity={selected ? 0.7 : hovered ? 0.45 : 0.25}
+        />
+      </mesh>
+
+      {/* Selection ring */}
+      {selected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -h / 2 + 0.01, 0]}>
+          <ringGeometry args={[ringR, ringR + 0.12, 32]} />
+          <meshStandardMaterial
+            color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
+            transparent opacity={0.45} toneMapped={false} side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
+
+      {/* Vertical beam */}
+      <mesh position={[0, h / 2 + 0.3, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.6, 4]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
+          transparent opacity={selected ? 0.5 : 0.2} toneMapped={false}
+        />
+      </mesh>
+      {/* Marker sphere */}
+      <mesh position={[0, h / 2 + 0.65, 0]}>
+        <sphereGeometry args={[0.055, 8, 8]} />
+        <meshStandardMaterial
+          color={ACCENT} emissive={ACCENT}
+          emissiveIntensity={selected ? 3 : 1.5} toneMapped={false}
+        />
+      </mesh>
+      <pointLight position={[0, h / 2 + 0.65, 0]} color={ACCENT} intensity={selected ? 0.6 : 0.15} distance={2.5} />
+
+      {/* Label */}
+      <Html center position={[0, h / 2 + 0.9, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
+          textShadow: '0 0 8px rgba(255,45,45,0.4)',
+          opacity: selected || hovered ? 1 : 0.6,
+        }}>{name}</div>
+      </Html>
+    </group>
+  )
+}
+
+/* ═══════════════════════════════════════════════
+   Path connector between two selected locations
+   ═══════════════════════════════════════════════ */
+
+function RouteLine({ origin, destination }) {
+  const geo = useMemo(() => {
+    if (!origin || !destination) return null
+    const o = LANDMARKS.find(l => l.id === origin)
+    const d = LANDMARKS.find(l => l.id === destination)
+    if (!o || !d) return null
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.Float32BufferAttribute([
+      o.x, 0.04, o.z, d.x, 0.04, d.z,
+    ], 3))
+    return g
+  }, [origin, destination])
+
+  if (!geo) return null
+
+  return (
+    <lineSegments geometry={geo}>
+      <lineBasicMaterial color={ACCENT} transparent opacity={0.35} />
+    </lineSegments>
+  )
+}
+
+/* ═══════════════════════════════════════════════
+   Campus camera — bird's-eye orbit + transition
+   ═══════════════════════════════════════════════ */
+
+function CampusCamera({ origin, destination, onTransitionDone }) {
+  const { camera } = useThree()
+  const angle = useRef(0)
+  const phase = useRef('orbit')
+  const t0 = useRef(null)
+  const startPos = useRef(new THREE.Vector3())
+  const targetPos = useRef(new THREE.Vector3())
+  const startLook = useRef(new THREE.Vector3())
+  const targetLook = useRef(new THREE.Vector3())
+  const prevOrigin = useRef(null)
+  const prevDest = useRef(null)
+
+  useFrame(({ clock }) => {
+    const hasRoute = origin && destination
+
+    if (hasRoute && phase.current === 'orbit') {
+      phase.current = 'transitioning'
+      t0.current = clock.elapsedTime
+      startPos.current.copy(camera.position)
+      startLook.current.set(0, 0, 0)
+
+      const o = LANDMARKS.find(l => l.id === origin)
+      const d = LANDMARKS.find(l => l.id === destination)
+      const mx = (o.x + d.x) / 2
+      const mz = (o.z + d.z) / 2
+      const dx = d.x - o.x, dz = d.z - o.z
+      const dist = Math.max(Math.sqrt(dx * dx + dz * dz), 1)
+      const px = -dz / dist, pz = dx / dist
+
+      targetPos.current.set(mx + px * dist * 0.8, dist * 0.45 + 4, mz + pz * dist * 0.8)
+      targetLook.current.set(mx, 0.3, mz)
+
+      prevOrigin.current = origin
+      prevDest.current = destination
+    }
+
+    if (!hasRoute && phase.current !== 'orbit') {
+      phase.current = 'resetting'
+      t0.current = clock.elapsedTime
+      startPos.current.copy(camera.position)
+      const curLook = targetLook.current.clone()
+      startLook.current.copy(curLook)
+      const a = angle.current
+      targetPos.current.set(Math.sin(a) * 28, 22, Math.cos(a) * 28)
+      targetLook.current.set(0, 0, 0)
+    }
+
+    if (phase.current === 'transitioning') {
+      const raw = Math.min(1, (clock.elapsedTime - t0.current) / 1.5)
+      const t = easeInOutCubic(raw)
+      camera.position.lerpVectors(startPos.current, targetPos.current, t)
+      const look = new THREE.Vector3().lerpVectors(startLook.current, targetLook.current, t)
+      camera.lookAt(look)
+      if (raw >= 1) {
+        phase.current = 'focused'
+        onTransitionDone()
+      }
       return
     }
 
-    if (t0.current === null) t0.current = clock.elapsedTime
-    const raw = Math.min(1, (clock.elapsedTime - t0.current) / ANIM_DURATION)
-    const t = easeInOutCubic(raw)
-
-    camera.position.copy(curve.getPointAt(t))
-    lookAt.current.lerp(new THREE.Vector3(0, 3.5 - t * 0.4, 0), 0.04)
-    camera.lookAt(lookAt.current)
-
-    if (raw >= 1 && !done.current) {
-      done.current = true
-      onComplete()
+    if (phase.current === 'resetting') {
+      const raw = Math.min(1, (clock.elapsedTime - t0.current) / 1.2)
+      const t = easeInOutCubic(raw)
+      camera.position.lerpVectors(startPos.current, targetPos.current, t)
+      const look = new THREE.Vector3().lerpVectors(startLook.current, targetLook.current, t)
+      camera.lookAt(look)
+      if (raw >= 1) phase.current = 'orbit'
+      return
     }
+
+    if (phase.current === 'focused') {
+      camera.lookAt(targetLook.current)
+      return
+    }
+
+    angle.current += 0.0012
+    camera.position.set(
+      Math.sin(angle.current) * 28,
+      22,
+      Math.cos(angle.current) * 28
+    )
+    camera.lookAt(0, 0, 0)
   })
 
   return null
 }
 
 /* ═══════════════════════════════════════════════
-   Scene content (everything inside the Canvas)
+   Campus lighting
    ═══════════════════════════════════════════════ */
 
-function SceneContent({ phase, onCinematicComplete }) {
-  const active = phase === 'cinematic' || phase === 'complete'
+function CampusLighting() {
   return (
     <>
-      <color attach="background" args={[DARK]} />
-      <fog attach="fog" args={[DARK, 22, 55]} />
-      <SceneLighting active={active} />
-      <CinematicCamera active={active} onComplete={onCinematicComplete} />
-      <Ground />
-      <GeiselModel />
+      <ambientLight intensity={0.20} color="#aaccff" />
+      <directionalLight position={[12, 18, 10]} intensity={0.55} color="#ddeeff" />
+      <spotLight position={[0, 24, 0]} angle={0.45} penumbra={0.9} intensity={0.8} color="#220808" />
+      <pointLight position={[0, 0.5, 0]} color={ACCENT} intensity={0.4} distance={20} decay={2} />
     </>
   )
 }
 
 /* ═══════════════════════════════════════════════
-   UI — Glass Notification Card  (Step 1)
+   Campus scene content
    ═══════════════════════════════════════════════ */
 
-const GLASS = {
-  background: 'linear-gradient(165deg, rgba(35,35,40,0.95) 0%, rgba(15,15,20,0.97) 100%)',
-  border: '1px solid rgba(255,255,255,0.10)',
+function CampusSceneContent({ origin, destination, onBuildingClick, onTransitionDone }) {
+  return (
+    <>
+      <color attach="background" args={['#000000']} />
+      <fog attach="fog" args={['#000000', 30, 55]} />
+      <CampusLighting />
+      <CampusCamera origin={origin} destination={destination} onTransitionDone={onTransitionDone} />
+      <CampusGrid />
+      <RouteLine origin={origin} destination={destination} />
+      {LANDMARKS.map(lm => (
+        <CampusBuilding
+          key={lm.id}
+          landmark={lm}
+          selected={lm.id === origin || lm.id === destination}
+          onSelect={onBuildingClick}
+        />
+      ))}
+    </>
+  )
 }
 
-function NotificationCard({ onAccept, visible }) {
+/* ═══════════════════════════════════════════════
+   Stats panel — floating Apple-style glass card
+   ═══════════════════════════════════════════════ */
+
+function StatsPanel({ origin, destination, visible }) {
+  if (!origin || !destination) return null
+  const o = LANDMARKS.find(l => l.id === origin)
+  const d = LANDMARKS.find(l => l.id === destination)
+  if (!o || !d) return null
+
+  const dx = (d.x - o.x) * METERS_PER_UNIT
+  const dz = (d.z - o.z) * METERS_PER_UNIT
+  const distM = Math.round(Math.sqrt(dx * dx + dz * dz))
+  const walkMin = (distM / 1.4 / 60).toFixed(1)
+  const bikeMin = (distM / 5 / 60).toFixed(1)
+  const timeSaved = (distM / 1.4 / 60 - distM / 5 / 60).toFixed(1)
+
+  const rowStyle = {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '11px 0',
+    borderBottom: '1px solid rgba(255,255,255,0.05)',
+  }
+  const labelStyle = { fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.40)' }
+  const valueStyle = { fontSize: 14, fontWeight: 700, color: '#fff' }
+  const accentVal = { ...valueStyle, color: ACCENT }
+
   return (
     <div style={{
-      position: 'absolute', inset: 0, zIndex: 30,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(ellipse at 50% 45%, rgba(8,8,14,0.80) 0%, rgba(2,2,6,0.97) 70%)',
+      position: 'absolute', bottom: 40, right: 40, zIndex: 40, width: 330,
+      background: 'linear-gradient(165deg, rgba(25,25,30,0.93) 0%, rgba(10,10,14,0.96) 100%)',
+      border: '1px solid rgba(255,45,45,0.12)',
+      borderRadius: 24, padding: '28px 26px',
+      color: '#fff',
+      fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+      boxShadow: '0 24px 64px rgba(0,0,0,0.65), 0 0 50px rgba(255,45,45,0.05)',
       opacity: visible ? 1 : 0,
-      transition: 'opacity 1.2s cubic-bezier(.4,0,.2,1)',
+      transform: visible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
+      transition: 'opacity 0.8s cubic-bezier(.4,0,.2,1), transform 0.8s cubic-bezier(.4,0,.2,1)',
       pointerEvents: visible ? 'auto' : 'none',
     }}>
-      <div className="notif-card" style={{
-        ...GLASS,
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 28,
-        padding: '40px 36px',
-        width: 330,
-        boxShadow:
-          '0 24px 64px rgba(0,0,0,0.7), ' +
-          '0 0 0 0.5px rgba(255,255,255,0.08) inset, ' +
-          '0 0 60px rgba(255,42,42,0.06)',
-        textAlign: 'center',
-        fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
-        color: '#fff',
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
-        transition: 'transform 1s cubic-bezier(.4,0,.2,1), opacity 1s cubic-bezier(.4,0,.2,1)',
+      {/* Top accent line */}
+      <div style={{
+        position: 'absolute', top: 0, left: '15%', right: '15%', height: 1,
+        background: 'linear-gradient(90deg, transparent, rgba(255,45,45,0.25), transparent)',
+      }} />
+
+      <div style={{
+        fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.28)',
+        textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 18,
       }}>
-        {/* Diagonal shimmer reflection */}
-        <div className="card-shimmer" style={{
-          position: 'absolute', top: 0, left: '-75%',
-          width: '50%', height: '100%',
-          background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 55%, transparent 60%)',
-          pointerEvents: 'none',
-        }} />
-        {/* Top highlight edge */}
-        <div style={{
-          position: 'absolute', top: 0, left: '10%', right: '10%', height: 1,
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)',
-          pointerEvents: 'none',
-        }} />
+        Route Analysis
+      </div>
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 2 }}>
-            NomNom
-          </div>
-          <div style={{
-            fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)',
-            textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 28,
-          }}>
-            New Delivery Request
-          </div>
+      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{o.name}</div>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.30)', marginBottom: 20 }}>→ {d.name}</div>
 
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: 16, padding: '16px 20px',
-            textAlign: 'left', marginBottom: 28,
-          }}>
-            {[['Pickup', 'Sixth Dining Hall'], ['Dropoff', 'Geisel Library'], ['Tip', '$3']].map(([k, v], i, a) => (
-              <div key={k} style={{
-                display: 'flex', justifyContent: 'space-between',
-                marginBottom: i < a.length - 1 ? 12 : 0,
-              }}>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.40)', fontWeight: 500 }}>{k}</span>
-                <span style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>{v}</span>
-              </div>
-            ))}
-          </div>
+      <div style={rowStyle}>
+        <span style={labelStyle}>Distance</span>
+        <span style={valueStyle}>{distM}m</span>
+      </div>
+      <div style={rowStyle}>
+        <span style={labelStyle}>Walking Time</span>
+        <span style={valueStyle}>{walkMin} min</span>
+      </div>
+      <div style={rowStyle}>
+        <span style={labelStyle}>Time Saved Using NomNom</span>
+        <span style={accentVal}>{timeSaved} min</span>
+      </div>
+      <div style={{ ...rowStyle, borderBottom: 'none' }}>
+        <span style={labelStyle}>Potential Earnings (Batch ×3)</span>
+        <span style={accentVal}>$9</span>
+      </div>
 
-          <button onClick={onAccept} style={{
-            width: '100%', padding: '14px 0',
-            background: '#ff2a2a',
-            border: 'none',
-            borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 15,
-            fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer',
-            transition: 'transform 0.25s, box-shadow 0.3s',
-            boxShadow: '0 0 20px rgba(255,42,42,0.25)',
-            letterSpacing: '-0.01em',
-          }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'scale(1.03)'
-              e.currentTarget.style.boxShadow = '0 0 36px rgba(255,42,42,0.4)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'scale(1)'
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(255,42,42,0.25)'
-            }}
-          >
-            Accept Delivery
-          </button>
-        </div>
+      <div style={{
+        marginTop: 14, fontSize: 11, color: 'rgba(255,255,255,0.22)',
+        textAlign: 'center', letterSpacing: '0.02em',
+      }}>
+        Single order: $3 · Batch of 3: $9
       </div>
     </div>
   )
 }
 
 /* ═══════════════════════════════════════════════
-   UI — Minimal HUD  (Step 5)
+   Campus HUD overlay
    ═══════════════════════════════════════════════ */
 
-function HudOverlay({ visible }) {
+function CampusHUD({ origin, destination }) {
   const base = {
     fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
     color: 'rgba(255,255,255,0.45)',
@@ -529,32 +814,52 @@ function HudOverlay({ visible }) {
     fontWeight: 500,
   }
 
+  const prompt = !origin
+    ? 'Select an origin location'
+    : !destination
+      ? 'Now select a destination'
+      : null
+
   return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 20,
-      pointerEvents: 'none',
-      opacity: visible ? 1 : 0,
-      transition: 'opacity 1s ease-in',
-    }}>
+    <div style={{ position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none' }}>
+      {/* Top left branding */}
       <div style={{ position: 'absolute', top: 28, left: 32, ...base }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.04em' }}>
-          NOMNOM
-        </div>
-        <div style={{ marginTop: 4 }}>DELIVERY PLATFORM</div>
+        <div style={{
+          fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.04em',
+        }}>NOMNOM</div>
+        <div style={{ marginTop: 4 }}>CAMPUS MAP</div>
       </div>
 
+      {/* Top right coordinates */}
       <div style={{ position: 'absolute', top: 28, right: 32, textAlign: 'right', ...base }}>
         <div>32.8801° N</div>
         <div style={{ marginTop: 2 }}>117.2340° W</div>
       </div>
 
-      <div style={{
-        position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
-        textTransform: 'uppercase', ...base,
-      }}>
-        UCSD Campus &bull; San Diego, CA
-      </div>
+      {/* Bottom center prompt */}
+      {prompt && (
+        <div style={{
+          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
+          fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.40)',
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          letterSpacing: '0.03em',
+          padding: '10px 24px', borderRadius: 12,
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.06)',
+        }}>{prompt}</div>
+      )}
 
+      {/* Reset hint when both selected */}
+      {origin && destination && (
+        <div style={{
+          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
+          fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.25)',
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          letterSpacing: '0.04em',
+        }}>Click any building to reset</div>
+      )}
+
+      {/* Scan line */}
       <div style={{
         position: 'absolute', bottom: 28, right: 32,
         width: 60, height: 2, background: 'rgba(255,255,255,0.12)',
@@ -564,49 +869,14 @@ function HudOverlay({ visible }) {
           width: '40%', height: '100%', background: ACCENT, borderRadius: 1,
         }} />
       </div>
-    </div>
-  )
-}
 
-/* ═══════════════════════════════════════════════
-   UI — Explore NomNom  (Step 6)
-   ═══════════════════════════════════════════════ */
-
-function ExploreButton({ visible }) {
-  return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 25,
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      gap: 16,
-      pointerEvents: visible ? 'auto' : 'none',
-      opacity: visible ? 1 : 0,
-      transition: 'opacity 0.9s cubic-bezier(.4,0,.2,1)',
-    }}>
-      <a href="#how-it-works" style={{
-        display: 'inline-block', padding: '18px 52px',
-        background: 'linear-gradient(165deg, rgba(35,35,40,0.92) 0%, rgba(15,15,20,0.95) 100%)',
-        border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 18,
-        color: '#fff', fontWeight: 700, fontSize: 18,
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        textDecoration: 'none', letterSpacing: '-0.01em',
-        boxShadow: '0 0 44px rgba(255,42,42,0.08), 0 8px 32px rgba(0,0,0,0.5)',
-        transition: 'background 0.3s, box-shadow 0.3s, transform 0.3s',
-      }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
-          e.currentTarget.style.boxShadow = '0 0 60px rgba(255,42,42,0.15), 0 8px 32px rgba(0,0,0,0.5)'
-          e.currentTarget.style.transform = 'scale(1.03)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = 'linear-gradient(165deg, rgba(35,35,40,0.92) 0%, rgba(15,15,20,0.95) 100%)'
-          e.currentTarget.style.boxShadow = '0 0 44px rgba(255,42,42,0.08), 0 8px 32px rgba(0,0,0,0.5)'
-          e.currentTarget.style.transform = 'scale(1)'
-        }}
-      >
-        Explore NomNom
-      </a>
+      {/* Bottom left campus label */}
+      <div style={{
+        position: 'absolute', bottom: 28, left: 32,
+        textTransform: 'uppercase', ...base,
+      }}>
+        UCSD Campus · San Diego, CA
+      </div>
     </div>
   )
 }
@@ -625,13 +895,6 @@ function InjectKeyframes() {
       .hud-scan-line {
         animation: hudScan 2.4s ease-in-out infinite;
       }
-      @keyframes cardShimmer {
-        0%   { left: -75%; }
-        100% { left: 150%; }
-      }
-      .card-shimmer {
-        animation: cardShimmer 5s ease-in-out infinite;
-      }
     `}</style>
   )
 }
@@ -641,10 +904,26 @@ function InjectKeyframes() {
    ═══════════════════════════════════════════════ */
 
 export default function HeroScene() {
-  const [phase, setPhase] = useState('notification')
+  const [origin, setOrigin] = useState(null)
+  const [destination, setDestination] = useState(null)
+  const [showStats, setShowStats] = useState(false)
 
-  const handleAccept = useCallback(() => setPhase('cinematic'), [])
-  const handleCinematicDone = useCallback(() => setPhase('complete'), [])
+  const handleBuildingClick = useCallback((id) => {
+    if (id === 'libwalk') return
+    if (!origin) {
+      setOrigin(id)
+    } else if (!destination && id !== origin) {
+      setDestination(id)
+    } else {
+      setOrigin(null)
+      setDestination(null)
+      setShowStats(false)
+    }
+  }, [origin, destination])
+
+  const handleTransitionDone = useCallback(() => {
+    setShowStats(true)
+  }, [])
 
   return (
     <>
@@ -652,21 +931,25 @@ export default function HeroScene() {
       <div style={{
         width: '100%', height: '100vh',
         position: 'relative', overflow: 'hidden',
-        background: DARK,
+        background: '#000',
       }}>
         <div style={{ position: 'absolute', inset: 0 }}>
           <Canvas
             dpr={[1, 1.5]}
-            camera={{ position: [3, 4.5, -3], fov: 50, near: 0.1, far: 100 }}
+            camera={{ position: [0, 22, 28], fov: 42, near: 0.1, far: 200 }}
             style={{ width: '100%', height: '100%' }}
           >
-            <SceneContent phase={phase} onCinematicComplete={handleCinematicDone} />
+            <CampusSceneContent
+              origin={origin}
+              destination={destination}
+              onBuildingClick={handleBuildingClick}
+              onTransitionDone={handleTransitionDone}
+            />
           </Canvas>
         </div>
 
-        <NotificationCard onAccept={handleAccept} visible={phase === 'notification'} />
-        <HudOverlay visible={phase === 'cinematic' || phase === 'complete'} />
-        <ExploreButton visible={phase === 'complete'} />
+        <CampusHUD origin={origin} destination={destination} />
+        <StatsPanel origin={origin} destination={destination} visible={showStats} />
       </div>
     </>
   )
