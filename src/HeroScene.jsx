@@ -311,13 +311,7 @@ function ProceduralGeisel() {
 }
 
 function GeiselModel() {
-  return (
-    <ModelErrorBoundary fallback={<ProceduralGeisel />}>
-      <Suspense fallback={<ProceduralGeisel />}>
-        <GeiselGLB />
-      </Suspense>
-    </ModelErrorBoundary>
-  )
+  return <ProceduralGeisel />
 }
 
 /* ═══════════════════════════════════════════════
@@ -327,7 +321,7 @@ function GeiselModel() {
 
 const MAP_W = 34, MAP_H = 19.7
 const METERS_PER_UNIT = 60
-const GEISEL_SCALE = 0.15
+const GEISEL_SCALE = 0.08
 
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x: -4.8,  z: -0.4,  w: 0, d: 0, h: 0, isGeisel: true },
