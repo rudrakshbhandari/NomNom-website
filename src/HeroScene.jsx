@@ -1081,7 +1081,7 @@ function StatsPanel({ origin, destination, visible }) {
    Campus HUD overlay
    ═══════════════════════════════════════════════ */
 
-function CampusHUD({ origin, destination }) {
+function CampusHUD({ origin, destination, onExploreMore }) {
   const base = {
     fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
     color: 'rgba(255,255,255,0.45)',
@@ -1125,14 +1125,39 @@ function CampusHUD({ origin, destination }) {
         }}>{prompt}</div>
       )}
 
-      {/* Reset hint when both selected */}
+      {/* Explore more routes button when both selected */}
       {origin && destination && (
         <div style={{
           position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
-          fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.25)',
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          letterSpacing: '0.04em',
-        }}>Click any building to reset</div>
+          pointerEvents: 'auto',
+        }}>
+          <button
+            onClick={onExploreMore}
+            style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 13, fontWeight: 600,
+              color: '#fff',
+              letterSpacing: '0.02em',
+              padding: '12px 24px',
+              borderRadius: 14,
+              border: 'none',
+              background: ACCENT,
+              boxShadow: '0 0 24px rgba(255,42,42,0.35)',
+              cursor: 'pointer',
+              transition: 'box-shadow 0.3s, transform 0.2s',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 36px rgba(255,42,42,0.5)'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 24px rgba(255,42,42,0.35)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            Explore more routes
+          </button>
+        </div>
       )}
 
       {/* Scan line */}
@@ -1224,7 +1249,15 @@ export default function HeroScene() {
           </Canvas>
         </div>
 
-        <CampusHUD origin={origin} destination={destination} />
+        <CampusHUD
+          origin={origin}
+          destination={destination}
+          onExploreMore={() => {
+            setOrigin(null)
+            setDestination(null)
+            setShowStats(false)
+          }}
+        />
         <StatsPanel origin={origin} destination={destination} visible={showStats} />
       </div>
     </>
