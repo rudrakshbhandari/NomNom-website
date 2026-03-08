@@ -3,7 +3,7 @@ import {
   Suspense, Component,
 } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Html, useTexture } from '@react-three/drei'
+import { useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════════
@@ -404,61 +404,148 @@ function CampusGrid() {
 }
 
 /* ═══════════════════════════════════════════════
-   Satellite image base — holographic projection
+   Campus wireframe hologram — glowing line geometry
+   Matches the Geisel Library hologram style
    ═══════════════════════════════════════════════ */
 
-function SatelliteBase() {
-  const texture = useTexture('/campus-aerial.png')
+const MAP_LINE_PROPS = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 1.8, toneMapped: false }
+const MAP_DIM_PROPS  = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 1.0, toneMapped: false, transparent: true, opacity: 0.6 }
+const MAP_GLOW_PROPS = { color: ACCENT, emissive: ACCENT, emissiveIntensity: 0.6, toneMapped: false, transparent: true, opacity: 0.25 }
 
-  const scanlineTex = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 4
-    canvas.height = 8
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, 4, 8)
-    ctx.fillStyle = 'rgba(0,0,0,0.35)'
-    ctx.fillRect(0, 0, 4, 1)
-    const tex = new THREE.CanvasTexture(canvas)
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    tex.repeat.set(CAMPUS_W * 2, CAMPUS_H * 12)
-    return tex
+function CampusWireframe() {
+  const { coastSegs, roadSegs, pathSegs, footprintSegs } = useMemo(() => {
+    const coast = [], roads = [], paths = [], prints = []
+
+    const polyToSegs = (arr, points) => {
+      for (let i = 0; i < points.length - 1; i++)
+        arr.push([points[i], points[i + 1]])
+    }
+
+    const rectToSegs = (arr, cx, cz, w, d) => {
+      const hw = w / 2, hd = d / 2
+      arr.push([[cx - hw, cz - hd], [cx + hw, cz - hd]])
+      arr.push([[cx + hw, cz - hd], [cx + hw, cz + hd]])
+      arr.push([[cx + hw, cz + hd], [cx - hw, cz + hd]])
+      arr.push([[cx - hw, cz + hd], [cx - hw, cz - hd]])
+    }
+
+    /* ── Coastline ── */
+    polyToSegs(coast, [
+      [-16, -9.2], [-13.5, -8.6], [-11, -9.0], [-8.5, -8.4],
+      [-6, -8.7], [-3.5, -8.3], [-1, -8.5], [1.5, -8.2],
+      [4, -7.8], [6.5, -7.4], [9, -7.6], [11.5, -8.0],
+      [14, -8.4], [16, -8.8],
+    ])
+
+    /* ── Major roads ── */
+    polyToSegs(roads, [
+      [-15.5, -8.2], [-14.8, -6.5], [-14.2, -4.5], [-13.8, -2.5],
+      [-13.2, -0.5], [-12.8, 1.5], [-12.2, 3.5], [-11.8, 5.5],
+      [-11.2, 7.5], [-10.8, 9.5],
+    ])
+    polyToSegs(roads, [
+      [-14.5, -6], [-11.5, -6.2], [-8.5, -5.8], [-5.5, -6.5],
+      [-2.5, -6.0], [0.5, -6.5], [3.5, -6.2], [6.5, -5.8],
+      [9.5, -6.0], [12, -6.5],
+    ])
+    polyToSegs(roads, [
+      [-13, -1.5], [-10, -1.8], [-7, -2.0], [-4, -1.5],
+      [-1, -1.0], [2, -1.5], [5, -2.0], [8, -1.5], [11, -2.0],
+    ])
+    polyToSegs(roads, [
+      [-12, 5.5], [-9, 5.0], [-6, 5.3], [-3, 5.5],
+      [0, 5.0], [3, 5.3], [6, 5.5], [9, 5.0], [12, 5.5], [15, 6.0],
+    ])
+    polyToSegs(roads, [
+      [10.5, -7.0], [10.2, -5.0], [9.8, -3.0], [9.2, -1.0],
+      [8.8, 1.0], [8.2, 3.0], [7.8, 5.0], [7.2, 7.0],
+    ])
+    polyToSegs(roads, [
+      [0, -6.5], [-0.3, -4.5], [-0.8, -2.5], [-1.5, -0.5],
+      [-2.0, 1.5], [-1.5, 3.5], [-0.5, 5.5],
+    ])
+
+    /* ── Campus paths ── */
+    polyToSegs(paths, [
+      [-6, 1.2], [-4, 1.3], [-2, 1.4], [0, 1.3], [2, 1.2], [4, 1.0], [6, 0.8],
+    ])
+    polyToSegs(paths, [[-3.5, -3.5], [-3.3, -1.5], [-3.1, 0.4], [-3.0, 2.5]])
+    polyToSegs(paths, [[5, -4], [5, -2], [5, 0], [5, 2], [5, 4]])
+    polyToSegs(paths, [[-7, -3], [-6, -2.5], [-5, -2], [-4, -1.5]])
+    polyToSegs(paths, [[2, -4], [3, -3], [4, -2.5], [4.5, -1.5]])
+
+    /* ── Building footprints ── */
+    LANDMARKS.forEach(lm => {
+      if (lm.isGeisel || lm.id === 'libwalk') return
+      if (lm.w && lm.d) rectToSegs(prints, lm.x, lm.z, lm.w * 1.15, lm.d * 1.15)
+    })
+
+    return { coastSegs: coast, roadSegs: roads, pathSegs: paths, footprintSegs: prints }
   }, [])
+
+  const lineData = useMemo(() => {
+    const compute = (segs) => segs.map(([from, to]) => {
+      const dx = to[0] - from[0], dz = to[1] - from[1]
+      return {
+        cx: (from[0] + to[0]) / 2,
+        cz: (from[1] + to[1]) / 2,
+        len: Math.sqrt(dx * dx + dz * dz),
+        rot: Math.atan2(dx, dz),
+      }
+    })
+    return {
+      coast: compute(coastSegs),
+      roads: compute(roadSegs),
+      paths: compute(pathSegs),
+      prints: compute(footprintSegs),
+    }
+  }, [coastSegs, roadSegs, pathSegs, footprintSegs])
 
   return (
     <group>
-      {/* Satellite image plane — red-tinted hologram */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
-        <meshStandardMaterial
-          map={texture}
-          color="#cc3030"
-          transparent
-          opacity={0.42}
-          emissive="#1a0404"
-          emissiveIntensity={0.4}
-          toneMapped={false}
-        />
-      </mesh>
+      {/* ── Coastline — brightest, thickest ── */}
+      {lineData.coast.map((l, i) => (
+        <group key={`c-${i}`}>
+          <mesh position={[l.cx, 0.04, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.04, 0.022, l.len]} />
+            <meshStandardMaterial {...MAP_LINE_PROPS} />
+          </mesh>
+          <mesh position={[l.cx, 0.04, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.10, 0.014, l.len]} />
+            <meshStandardMaterial {...MAP_GLOW_PROPS} />
+          </mesh>
+        </group>
+      ))}
 
-      {/* Scanline overlay */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
-        <planeGeometry args={[CAMPUS_W, CAMPUS_H]} />
-        <meshBasicMaterial
-          map={scanlineTex}
-          transparent
-          opacity={0.18}
-          depthWrite={false}
-        />
-      </mesh>
+      {/* ── Major roads — medium brightness ── */}
+      {lineData.roads.map((l, i) => (
+        <group key={`r-${i}`}>
+          <mesh position={[l.cx, 0.035, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.028, 0.016, l.len]} />
+            <meshStandardMaterial {...MAP_LINE_PROPS} />
+          </mesh>
+          <mesh position={[l.cx, 0.035, l.cz]} rotation={[0, l.rot, 0]}>
+            <boxGeometry args={[0.07, 0.010, l.len]} />
+            <meshStandardMaterial {...MAP_GLOW_PROPS} />
+          </mesh>
+        </group>
+      ))}
 
-      {/* Edge glow border around satellite plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
-        <planeGeometry args={[CAMPUS_W + 0.15, CAMPUS_H + 0.15]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2}
-          transparent opacity={0.08} toneMapped={false} side={THREE.DoubleSide}
-        />
-      </mesh>
+      {/* ── Paths — dimmer, thinner ── */}
+      {lineData.paths.map((l, i) => (
+        <mesh key={`p-${i}`} position={[l.cx, 0.03, l.cz]} rotation={[0, l.rot, 0]}>
+          <boxGeometry args={[0.020, 0.012, l.len]} />
+          <meshStandardMaterial {...MAP_DIM_PROPS} />
+        </mesh>
+      ))}
+
+      {/* ── Building footprints — ground outlines ── */}
+      {lineData.prints.map((l, i) => (
+        <mesh key={`f-${i}`} position={[l.cx, 0.025, l.cz]} rotation={[0, l.rot, 0]}>
+          <boxGeometry args={[0.022, 0.014, l.len]} />
+          <meshStandardMaterial {...MAP_LINE_PROPS} />
+        </mesh>
+      ))}
     </group>
   )
 }
@@ -768,9 +855,7 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
       <CampusLighting />
       <CampusCamera origin={origin} destination={destination} onTransitionDone={onTransitionDone} />
       <CampusGrid />
-      <Suspense fallback={null}>
-        <SatelliteBase />
-      </Suspense>
+      <CampusWireframe />
       <RouteLine origin={origin} destination={destination} />
       {LANDMARKS.map(lm => (
         <CampusBuilding
