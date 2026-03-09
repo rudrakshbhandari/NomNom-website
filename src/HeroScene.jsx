@@ -516,8 +516,8 @@ function CampusGrid() {
         <lineBasicMaterial color={ACCENT} transparent opacity={0.05} />
       </lineSegments>
 
-      {/* Satellite image plane — red-tinted holographic projection */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+      {/* Satellite image plane — red-tinted holographic projection (no raycast) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} raycast={() => null}>
         <planeGeometry args={[MAP_W, MAP_H]} />
         <meshStandardMaterial
           map={campusTex}
@@ -528,8 +528,8 @@ function CampusGrid() {
         />
       </mesh>
 
-      {/* Scanline overlay */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]}>
+      {/* Scanline overlay (no raycast) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]} raycast={() => null}>
         <planeGeometry args={[MAP_W, MAP_H]} />
         <meshBasicMaterial
           map={scanTex}
@@ -543,8 +543,8 @@ function CampusGrid() {
         <lineBasicMaterial color={ACCENT} transparent opacity={0.30} />
       </lineSegments>
 
-      {/* Outer glow band around the map edge */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+      {/* Outer glow band around the map edge (no raycast) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} raycast={() => null}>
         <planeGeometry args={[MAP_W + 1.5, MAP_H + 1.5]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={0.25}
@@ -555,8 +555,8 @@ function CampusGrid() {
       {/* Red particles evaporating from bottom — floating effect */}
       <EvaporatingParticles />
 
-      {/* Dark ground plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+      {/* Dark ground plane (no raycast) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} raycast={() => null}>
         <circleGeometry args={[28, 64]} />
         <meshStandardMaterial color="#020204" metalness={0.95} roughness={0.4} />
       </mesh>
@@ -595,7 +595,7 @@ function EvaporatingParticles() {
     ref.current.geometry.attributes.position.needsUpdate = true
   })
   return (
-    <points ref={ref}>
+    <points ref={ref} raycast={() => null}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -632,6 +632,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
   const [hovered, setHovered] = useState(false)
   const gRef = useRef(null)
   const y = useRef(0)
+  const sunk = lift < -0.5
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
@@ -669,9 +670,11 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
         <group scale={[GEISEL_SCALE, GEISEL_SCALE, GEISEL_SCALE]}>
           <GeiselModel />
         </group>
-        <mesh onClick={handleClick}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
+        <mesh
+          onClick={sunk ? undefined : handleClick}
+          onPointerOver={sunk ? undefined : () => setHovered(true)}
+          onPointerOut={sunk ? undefined : () => setHovered(false)}
+          raycast={sunk ? () => null : undefined}
         >
           <cylinderGeometry args={[1.3, 1.3, gH, 8]} />
           <meshStandardMaterial transparent opacity={0} depthWrite={false} />
@@ -743,17 +746,19 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
   return (
     <group ref={gRef} position={[x, 0.03, z]}>
       {/* Invisible click target covering full footprint */}
-      <mesh position={[0, tallest / 2, 0]}
-        onClick={handleClick}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
+      <mesh
+        position={[0, tallest / 2, 0]}
+        onClick={sunk ? undefined : handleClick}
+        onPointerOver={sunk ? undefined : () => setHovered(true)}
+        onPointerOut={sunk ? undefined : () => setHovered(false)}
+        raycast={sunk ? () => null : undefined}
       >
         <boxGeometry args={[w, tallest, d]} />
         <meshStandardMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Base platform slab */}
-      <mesh position={[0, 0, 0]}>
+      {/* Base platform slab (no raycast — use click target) */}
+      <mesh position={[0, 0, 0]} raycast={() => null}>
         <boxGeometry args={[w + 0.06, 0.015, d + 0.06]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5 * boost}
@@ -764,22 +769,22 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
       {/* Building cluster */}
       {cluster.map((b, bi) => (
         <group key={`b-${bi}`} position={[b.ox, b.h / 2, b.oz]}>
-          {/* Transparent fill */}
-          <mesh>
+          {/* Transparent fill (no raycast) */}
+          <mesh raycast={() => null}>
             <boxGeometry args={[b.w, b.h, b.d]} />
             <meshStandardMaterial
               color={ACCENT} transparent opacity={fillOp}
               metalness={0.85} roughness={0.15}
             />
           </mesh>
-          {/* Wireframe */}
-          <mesh>
+          {/* Wireframe (no raycast) */}
+          <mesh raycast={() => null}>
             <boxGeometry args={[b.w, b.h, b.d]} />
             <meshStandardMaterial color={ACCENT} wireframe transparent opacity={wfOp} />
           </mesh>
           {/* Corner edge glow */}
           {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], ci) => (
-            <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]}>
+            <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]} raycast={() => null}>
               <boxGeometry args={[0.022, b.h, 0.022]} />
               <meshStandardMaterial
                 color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8 * boost}
@@ -790,19 +795,19 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
           {/* Top edge glow (tallest building only) */}
           {bi === 0 && (
             <>
-              <mesh position={[0, b.h / 2, -b.d / 2]}>
+              <mesh position={[0, b.h / 2, -b.d / 2]} raycast={() => null}>
                 <boxGeometry args={[b.w, 0.014, 0.014]} />
                 <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
-              <mesh position={[0, b.h / 2, b.d / 2]}>
+              <mesh position={[0, b.h / 2, b.d / 2]} raycast={() => null}>
                 <boxGeometry args={[b.w, 0.014, 0.014]} />
                 <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
-              <mesh position={[-b.w / 2, b.h / 2, 0]}>
+              <mesh position={[-b.w / 2, b.h / 2, 0]} raycast={() => null}>
                 <boxGeometry args={[0.014, 0.014, b.d]} />
                 <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
-              <mesh position={[b.w / 2, b.h / 2, 0]}>
+              <mesh position={[b.w / 2, b.h / 2, 0]} raycast={() => null}>
                 <boxGeometry args={[0.014, 0.014, b.d]} />
                 <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
@@ -813,7 +818,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
 
       {/* Selection ring */}
       {selected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} raycast={() => null}>
           <ringGeometry args={[ringR, ringR + 0.12, 32]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
@@ -823,7 +828,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
       )}
 
       {/* Vertical marker beam */}
-      <mesh position={[0, tallest + 0.25, 0]}>
+      <mesh position={[0, tallest + 0.25, 0]} raycast={() => null}>
         <cylinderGeometry args={[0.01, 0.01, 0.5, 4]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
@@ -831,7 +836,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
         />
       </mesh>
       {/* Marker sphere */}
-      <mesh position={[0, tallest + 0.55, 0]}>
+      <mesh position={[0, tallest + 0.55, 0]} raycast={() => null}>
         <sphereGeometry args={[0.05, 8, 8]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT}
@@ -864,6 +869,7 @@ function DiningHallMarker({ hall, selected, onSelect, lift = 0, forcedBright = f
   const [hovered, setHovered] = useState(false)
   const gRef = useRef(null)
   const y = useRef(0)
+  const sunk = lift < -0.5
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
@@ -902,10 +908,12 @@ function DiningHallMarker({ hall, selected, onSelect, lift = 0, forcedBright = f
 
   return (
     <group ref={gRef} position={[x, 0.03, z]}>
-      <mesh position={[0, tallest / 2, 0]}
-        onClick={handleClick}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
+      <mesh
+        position={[0, tallest / 2, 0]}
+        onClick={sunk ? undefined : handleClick}
+        onPointerOver={sunk ? undefined : () => setHovered(true)}
+        onPointerOut={sunk ? undefined : () => setHovered(false)}
+        raycast={sunk ? () => null : undefined}
       >
         <boxGeometry args={[w, tallest, d]} />
         <meshStandardMaterial transparent opacity={0} depthWrite={false} />
@@ -1206,8 +1214,15 @@ function BuildingSelector({ sectionId, onPickBuilding }) {
 
   return (
     <group position={[x, 0.03, z]}>
-      <Html center position={[0, 2.0, 0]} style={{ pointerEvents: 'auto' }}>
-        <div style={{
+      <Html
+        center
+        position={[0, 2.0, 0]}
+        pointerEvents="auto"
+        zIndexRange={[1000000, 1000000]}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <div
+          style={{
           width: 320,
           background: 'linear-gradient(165deg, rgba(25,25,30,0.92) 0%, rgba(10,10,14,0.95) 100%)',
           border: '1px solid rgba(255,45,45,0.16)',
@@ -1241,7 +1256,12 @@ function BuildingSelector({ sectionId, onPickBuilding }) {
             {section.buildings.map((b, i) => (
               <button
                 key={`${sectionId}-${i}`}
-                onClick={() => onPickBuilding(buildingId(sectionId, i))}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onPickBuilding(buildingId(sectionId, i))
+                }}
                 style={{
                   textAlign: 'left',
                   width: '100%',
@@ -1666,7 +1686,7 @@ export default function HeroScene() {
     const m = {}
     for (const dh of DINING_HALLS) {
       if (flow === 'chooseDining') m[dh.id] = 0.7
-      else if (flow !== 'idle' && origin) m[dh.id] = dh.id === origin ? 0.7 : -0.10
+      else if (flow !== 'idle' && origin) m[dh.id] = dh.id === origin ? 0.7 : -1.0
       else m[dh.id] = 0
     }
     return m
@@ -1691,14 +1711,19 @@ export default function HeroScene() {
   const sectionLift = useMemo(() => {
     const m = {}
     for (const lm of LANDMARKS) {
-      m[lm.id] = (flow !== 'idle' && flow !== 'chooseDining' && SECTION_IDS.has(lm.id)) ? 0.85 : 0
+      if (flow === 'chooseDining') m[lm.id] = -1.0
+      else if (flow === 'chooseSection' && !SECTION_IDS.has(lm.id)) m[lm.id] = -1.0
+      else if (flow !== 'idle' && SECTION_IDS.has(lm.id)) m[lm.id] = 0.85
+      else m[lm.id] = 0
     }
     return m
   }, [flow])
 
   const sectionBright = useMemo(() => {
     const m = {}
-    for (const lm of LANDMARKS) m[lm.id] = (flow !== 'idle' && flow !== 'chooseDining' && SECTION_IDS.has(lm.id))
+    for (const lm of LANDMARKS) {
+      m[lm.id] = (flow !== 'idle' && flow !== 'chooseDining' && SECTION_IDS.has(lm.id))
+    }
     return m
   }, [flow])
 
@@ -1756,6 +1781,8 @@ export default function HeroScene() {
     setShowStats(true)
   }, [flow])
 
+  const containerRef = useRef(null)
+
   return (
     <>
       <InjectKeyframes />
@@ -1764,11 +1791,14 @@ export default function HeroScene() {
         position: 'relative', overflow: 'hidden',
         background: '#000',
       }}>
-        <div style={{ position: 'absolute', inset: 0 }}>
+        <div ref={containerRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }}>
           <Canvas
             dpr={[1, 1.5]}
             camera={{ position: [0, 15, 24], fov: 40, near: 0.1, far: 200 }}
             style={{ width: '100%', height: '100%' }}
+            onCreated={({ events }) => {
+              if (containerRef.current) events.connect(containerRef.current)
+            }}
           >
             <CampusSceneContent
               origin={origin}
