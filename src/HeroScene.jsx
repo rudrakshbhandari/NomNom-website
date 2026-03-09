@@ -1414,7 +1414,7 @@ export default function HeroScene() {
                 margin: 0,
                 marginBottom: '0.5rem',
               }}>
-                Start a delivery
+                See NomNom in action
               </h2>
               <p style={{
                 fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
@@ -1424,7 +1424,7 @@ export default function HeroScene() {
                 margin: 0,
                 marginBottom: '1.5rem',
               }}>
-                See how NomNom works
+                Explore how campus delivery works.
               </p>
               <button
                 onClick={() => setStarted(true)}
@@ -1451,7 +1451,7 @@ export default function HeroScene() {
                   e.currentTarget.style.transform = 'scale(1)'
                 }}
               >
-                Get started
+                Try the demo
               </button>
             </div>
           </div>
