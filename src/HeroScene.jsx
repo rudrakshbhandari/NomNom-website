@@ -1091,7 +1091,7 @@ function StatsPanel({ origin, destination, visible }) {
   const walkMin = (deliveryDistanceMeters / 1.4 / 60 * 2).toFixed(1)
 
   const distanceFee = (deliveryDistanceMeters / 150) * 0.50
-  const carrierEarnings = 2.00 + distanceFee + 1.00
+  const carrierEarnings = 1.00 + distanceFee + 1.00
 
   const rowStyle = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -1105,12 +1105,14 @@ function StatsPanel({ origin, destination, visible }) {
   return (
     <div style={{
       position: 'absolute', bottom: 40, right: 40, zIndex: 40, width: 330,
-      background: 'linear-gradient(165deg, rgba(25,25,30,0.93) 0%, rgba(10,10,14,0.96) 100%)',
-      border: '1px solid rgba(255,45,45,0.12)',
+      background: 'linear-gradient(165deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.06) 100%)',
+      backdropFilter: 'blur(24px) saturate(1.2)',
+      WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
+      border: '1px solid rgba(255,255,255,0.18)',
       borderRadius: 24, padding: '28px 26px',
       color: '#fff',
       fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
-      boxShadow: '0 24px 64px rgba(0,0,0,0.65), 0 0 50px rgba(255,45,45,0.05)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.1) inset, 0 0 40px rgba(255,45,45,0.06)',
       opacity: visible ? 1 : 0,
       transform: visible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
       transition: 'opacity 0.8s cubic-bezier(.4,0,.2,1), transform 0.8s cubic-bezier(.4,0,.2,1)',
@@ -1137,7 +1139,7 @@ function StatsPanel({ origin, destination, visible }) {
         <span style={valueStyle}>{deliveryDistanceMeters} m</span>
       </div>
       <div style={rowStyle}>
-        <span style={labelStyle}>Walking Time</span>
+        <span style={labelStyle}>Time saved walking to and fro</span>
         <span style={accentVal}>{walkMin} min</span>
       </div>
 
@@ -1149,7 +1151,7 @@ function StatsPanel({ origin, destination, visible }) {
         </div>
         <div style={rowStyle}>
           <span style={labelStyle}>Base fee</span>
-          <span style={valueStyle}>$2.00</span>
+          <span style={valueStyle}>$1.00</span>
         </div>
         <div style={rowStyle}>
           <span style={labelStyle}>Distance fee</span>
