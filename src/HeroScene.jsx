@@ -447,6 +447,17 @@ function CampusGrid() {
         />
       </mesh>
 
+      {/* Dark overlay to obscure baked-in white labels in the aerial texture */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.016, 0]}>
+        <planeGeometry args={[MAP_W, MAP_H]} />
+        <meshBasicMaterial
+          color="#0a0404"
+          transparent
+          opacity={0.35}
+          depthWrite={false}
+        />
+      </mesh>
+
       {/* Map border glow */}
       <lineSegments geometry={borderGeo}>
         <lineBasicMaterial color={ACCENT} transparent opacity={0.30} />
@@ -536,7 +547,7 @@ function seededRng(str) {
   return () => { s = (s * 16807 + 11) % 2147483647; return (s & 0x7fffffff) / 2147483647 }
 }
 
-function CampusBuilding({ landmark, selected, onSelect }) {
+function CampusBuilding({ landmark, selected, onSelect, showLabel }) {
   const { id, x, z, w, d, h, isGeisel, name } = landmark
   const [hovered, setHovered] = useState(false)
 
@@ -600,14 +611,16 @@ function CampusBuilding({ landmark, selected, onSelect }) {
           />
         </mesh>
         <pointLight position={[0, gH + 0.5, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={4} />
-        <Html center position={[0, gH + 0.8, 0]} style={{ pointerEvents: 'none' }}>
-          <div style={{
-            color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
-            textShadow: '0 0 12px rgba(255,45,45,0.6)',
-            opacity: selected || hovered ? 1 : 0.75,
-          }}>{name}</div>
-        </Html>
+        {showLabel && (
+          <Html center position={[0, gH + 0.8, 0]} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+              textShadow: '0 0 12px rgba(255,45,45,0.6)',
+              opacity: selected || hovered ? 1 : 0.75,
+            }}>{name}</div>
+          </Html>
+        )}
       </group>
     )
   }
@@ -622,13 +635,15 @@ function CampusBuilding({ landmark, selected, onSelect }) {
             transparent opacity={0.08} toneMapped={false} side={THREE.DoubleSide}
           />
         </mesh>
-        <Html center position={[0, 0.4, 0]} style={{ pointerEvents: 'none' }}>
-          <div style={{
-            color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
-            textShadow: '0 0 8px rgba(255,45,45,0.3)', opacity: 0.5,
-          }}>{name}</div>
-        </Html>
+        {showLabel && (
+          <Html center position={[0, 0.4, 0]} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
+              textShadow: '0 0 8px rgba(255,45,45,0.3)', opacity: 0.5,
+            }}>{name}</div>
+          </Html>
+        )}
       </group>
     )
   }
@@ -739,15 +754,16 @@ function CampusBuilding({ landmark, selected, onSelect }) {
       </mesh>
       <pointLight position={[0, tallest + 0.55, 0]} color={ACCENT} intensity={selected ? 0.6 : 0.15} distance={2.5} />
 
-      {/* Label */}
-      <Html center position={[0, tallest + 0.8, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
-          fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
-          textShadow: '0 0 8px rgba(255,45,45,0.4)',
-          opacity: selected || hovered ? 1 : 0.6,
-        }}>{name}</div>
-      </Html>
+      {showLabel && (
+        <Html center position={[0, tallest + 0.8, 0]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
+            textShadow: '0 0 8px rgba(255,45,45,0.4)',
+            opacity: selected || hovered ? 1 : 0.6,
+          }}>{name}</div>
+        </Html>
+      )}
     </group>
   )
 }
@@ -758,7 +774,7 @@ function CampusBuilding({ landmark, selected, onSelect }) {
 
 const DH_COLOR = '#ffffff'
 
-function DiningHallMarker({ hall, selected, onSelect }) {
+function DiningHallMarker({ hall, selected, onSelect, showLabel }) {
   const { id, x, z, name, w = 0.9, d = 0.7, h = 0.45 } = hall
   const [hovered, setHovered] = useState(false)
 
@@ -879,14 +895,16 @@ function DiningHallMarker({ hall, selected, onSelect }) {
       </mesh>
       <pointLight position={[0, tallest + 0.45, 0]} color={DH_COLOR} intensity={selected ? 0.5 : 0.1} distance={2} />
 
-      <Html center position={[0, tallest + 0.7, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
-          fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
-          textShadow: '0 0 6px rgba(255,255,255,0.4)',
-          opacity: selected || hovered ? 1 : 0.55,
-        }}>{name}</div>
-      </Html>
+      {showLabel && (
+        <Html center position={[0, tallest + 0.7, 0]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
+            textShadow: '0 0 6px rgba(255,255,255,0.4)',
+            opacity: selected || hovered ? 1 : 0.55,
+          }}>{name}</div>
+        </Html>
+      )}
     </group>
   )
 }
@@ -1040,7 +1058,7 @@ function CampusLighting() {
    Campus scene content
    ═══════════════════════════════════════════════ */
 
-function CampusSceneContent({ origin, destination, onBuildingClick, onTransitionDone, resetRequested, onResetComplete }) {
+function CampusSceneContent({ origin, destination, onBuildingClick, onTransitionDone, resetRequested, onResetComplete, showLabels }) {
   return (
     <>
       <color attach="background" args={['#000000']} />
@@ -1061,6 +1079,7 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
           landmark={lm}
           selected={lm.id === origin || lm.id === destination}
           onSelect={onBuildingClick}
+          showLabel={showLabels}
         />
       ))}
       {DINING_HALLS.map(dh => (
@@ -1069,6 +1088,7 @@ function CampusSceneContent({ origin, destination, onBuildingClick, onTransition
           hall={dh}
           selected={dh.id === origin || dh.id === destination}
           onSelect={onBuildingClick}
+          showLabel={showLabels}
         />
       ))}
     </>
@@ -1298,6 +1318,7 @@ function InjectKeyframes() {
    ═══════════════════════════════════════════════ */
 
 export default function HeroScene() {
+  const [started, setStarted] = useState(false)
   const [origin, setOrigin] = useState(null)
   const [destination, setDestination] = useState(null)
   const [showStats, setShowStats] = useState(false)
@@ -1341,6 +1362,7 @@ export default function HeroScene() {
               onTransitionDone={handleTransitionDone}
               resetRequested={resetRequested}
               onResetComplete={() => setResetRequested(false)}
+              showLabels={started}
             />
           </Canvas>
         </div>
@@ -1356,6 +1378,84 @@ export default function HeroScene() {
           }}
         />
         <StatsPanel origin={origin} destination={destination} visible={showStats} />
+
+        {!started && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 50,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              pointerEvents: 'auto',
+            }}
+          >
+            <div
+              style={{
+                background: 'linear-gradient(165deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 50%, rgba(255,255,255,0.05) 100%)',
+                backdropFilter: 'blur(24px) saturate(1.2)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 24,
+                padding: '2.5rem 3rem',
+                textAlign: 'center',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.1) inset',
+              }}
+            >
+              <h2 style={{
+                fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+                fontSize: '1.5rem',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                color: '#fff',
+                margin: 0,
+                marginBottom: '0.5rem',
+              }}>
+                Start a delivery
+              </h2>
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+                fontSize: '0.9375rem',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.6)',
+                margin: 0,
+                marginBottom: '1.5rem',
+              }}>
+                See how NomNom works
+              </p>
+              <button
+                onClick={() => setStarted(true)}
+                style={{
+                  fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  color: '#fff',
+                  background: ACCENT,
+                  border: 'none',
+                  borderRadius: 14,
+                  padding: '0.875rem 2rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 32px rgba(255,42,42,0.4)',
+                  transition: 'box-shadow 0.3s, transform 0.2s',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 48px rgba(255,42,42,0.5)'
+                  e.currentTarget.style.transform = 'scale(1.03)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 32px rgba(255,42,42,0.4)'
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+              >
+                Get started
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
