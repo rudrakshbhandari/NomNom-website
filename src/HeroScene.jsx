@@ -1647,7 +1647,7 @@ function InjectKeyframes() {
    ═══════════════════════════════════════════════ */
 
 export default function HeroScene() {
-  const [flow, setFlow] = useState('idle') // idle → chooseDining → chooseSection → zoomSection → chooseBuilding → returning → done
+  const [flow, setFlow] = useState('idle') // idle → chooseDining → chooseSection → zoomSection → chooseBuilding → returningToOrbit → focusingRoute → done
   const [origin, setOrigin] = useState(null)
   const [destination, setDestination] = useState(null)
   const [pendingSection, setPendingSection] = useState(null)
@@ -1661,6 +1661,7 @@ export default function HeroScene() {
       : null
 
   const routeVisible = flow === 'done'
+  const routeFocusEnabled = flow === 'focusingRoute' || flow === 'done'
 
   const diningLift = useMemo(() => {
     const m = {}
@@ -1747,11 +1748,16 @@ export default function HeroScene() {
     setShowBuildingSelector(false)
     setPendingSection(null)
     setShowStats(false)
-    setFlow('returning')
+    setFlow('returningToOrbit')
   }, [])
 
   const handleResetToOrbitDone = useCallback(() => {
-    if (flow !== 'returning') return
+    if (flow !== 'returningToOrbit') return
+    setFlow('focusingRoute')
+  }, [flow])
+
+  const handleRouteFocusDone = useCallback(() => {
+    if (flow !== 'focusingRoute') return
     setFlow('done')
     setShowStats(true)
   }, [flow])
@@ -1777,8 +1783,8 @@ export default function HeroScene() {
               showBuildingSelector={showBuildingSelector}
               onPickBuilding={handlePickBuilding}
               onBuildingClick={handleMapClick}
-              onTransitionDone={() => {}}
-              routeFocusEnabled={false}
+              onTransitionDone={handleRouteFocusDone}
+              routeFocusEnabled={routeFocusEnabled}
               onSectionZoomDone={handleSectionZoomDone}
               onResetToOrbitDone={handleResetToOrbitDone}
               routeVisible={routeVisible}
