@@ -28,6 +28,9 @@ const CAMERA_CURVE_PTS = [
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 }
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3)
+}
 
 /* ═══════════════════════════════════════════════
    GLB loader with procedural fallback
@@ -335,73 +338,18 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
   return R * c
 }
 
-const SECTION_BUILDINGS = {
-  marshall: [
-    'Marshall Upper Apartments',
-    'Marshall Lower Apartments',
-    'Marshall Residence Halls',
-    'Stewart Commons',
-    'Economics Building',
-  ],
-  muir: [
-    'Muir Apartments',
-    'Galbraith Hall',
-    'Applied Physics & Mathematics',
-    'Pacific Hall',
-    'Muir College Center',
-  ],
-  revelle: [
-    'York Hall',
-    'Blake Hall',
-    'Galathea Hall',
-    'Keeling Apartments',
-    'Revelle Plaza',
-  ],
-  sixth: [
-    'Sixth College North Tower',
-    'Sixth College South Tower',
-    'Pepper Canyon Hall',
-    'Visual Arts Facility',
-  ],
-  seventh: [
-    'Seventh College West Tower',
-    'Seventh College East Tower',
-    'Seventh College Apartments',
-  ],
-  eighth: [
-    'Eighth College Residence Hall A',
-    'Eighth College Residence Hall B',
-    'Theatre District Living Learning',
-  ],
-  warren: [
-    'Peterson Hall',
-    'Jacobs Hall',
-    'Franklin Antonio Hall',
-    'Warren Lecture Hall',
-  ],
-  erc: [
-    'International House',
-    'Rita Atkinson Residences',
-    'ERC Administration Building',
-  ],
-}
-
-function buildingId(sectionId, index) {
-  return `bld-${sectionId}-${index}`
-}
-
 const LANDMARKS = [
   { id: 'geisel',   name: 'Geisel Library',    x: -3.08, z:  0.79, w: 0, d: 0, h: 0, isGeisel: true, lat: 32.88140322, lon: -117.2376352 },
   { id: 'price',    name: 'Price Center',       x: -0.19, z: -0.20, w: 2.4, d: 1.6, h: 0.85, lat: 32.8797725, lon: -117.2364386 },
-  { id: 'sixth',    name: 'Sixth College',      x: -2.0,  z:  7.41, w: 1.8, d: 1.5, h: 0.70, lat: 32.88114707, lon: -117.242067, buildings: SECTION_BUILDINGS.sixth },
-  { id: 'seventh',  name: 'Seventh College',    x:-15.26, z:  6.97, w: 1.8, d: 1.3, h: 0.65, lat: 32.88829254, lon: -117.2425116, buildings: SECTION_BUILDINGS.seventh },
-  { id: 'eighth',   name: 'Eighth College',     x: 11.16, z:  8.20, w: 1.5, d: 1.3, h: 0.60, lat: 32.87286811, lon: -117.2425133, buildings: SECTION_BUILDINGS.eighth },
+  { id: 'sixth',    name: 'Sixth College',      x: -2.0,  z:  7.41, w: 1.8, d: 1.5, h: 0.70, lat: 32.88114707, lon: -117.242067 },
+  { id: 'seventh',  name: 'Seventh College',    x:-15.26, z:  6.97, w: 1.8, d: 1.3, h: 0.65, lat: 32.88829254, lon: -117.2425116 },
+  { id: 'eighth',   name: 'Eighth College',     x: 11.16, z:  8.20, w: 1.5, d: 1.3, h: 0.60, lat: 32.87286811, lon: -117.2425133 },
   { id: 'rimac',    name: 'RIMAC',              x:-10.19, z:  4.22, w: 2.8, d: 1.8, h: 1.00, lat: 32.88572127, lon: -117.2398888 },
-  { id: 'revelle',  name: 'Revelle College',    x:  8.45, z:  6.12, w: 1.8, d: 1.5, h: 0.70, lat: 32.87569795, lon: -117.2418738, buildings: SECTION_BUILDINGS.revelle },
-  { id: 'muir',     name: 'Muir College',       x:  1.18, z:  7.95, w: 1.6, d: 1.3, h: 0.60, lat: 32.87992274, lon: -117.2433412, buildings: SECTION_BUILDINGS.muir },
-  { id: 'marshall', name: 'Marshall College',   x: -5.41, z:  6.20, w: 1.8, d: 1.5, h: 0.70, lat: 32.8827955, lon: -117.2404624, buildings: SECTION_BUILDINGS.marshall },
-  { id: 'erc',      name: 'ERC',                x:-10.56, z:  8.73, w: 1.8, d: 1.3, h: 0.65, lat: 32.88413172, lon: -117.2420833, buildings: SECTION_BUILDINGS.erc },
-  { id: 'warren',   name: 'Warren College',     x: -7.56, z: -6.79, w: 1.8, d: 1.3, h: 0.65, lat: 32.88086208, lon: -117.2343993, buildings: SECTION_BUILDINGS.warren },
+  { id: 'revelle',  name: 'Revelle College',    x:  8.45, z:  6.12, w: 1.8, d: 1.5, h: 0.70, lat: 32.87569795, lon: -117.2418738 },
+  { id: 'muir',     name: 'Muir College',       x:  1.18, z:  7.95, w: 1.6, d: 1.3, h: 0.60, lat: 32.87992274, lon: -117.2433412 },
+  { id: 'marshall', name: 'Marshall College',   x: -5.41, z:  6.20, w: 1.8, d: 1.5, h: 0.70, lat: 32.8827955, lon: -117.2404624 },
+  { id: 'erc',      name: 'ERC',                x:-10.56, z:  8.73, w: 1.8, d: 1.3, h: 0.65, lat: 32.88413172, lon: -117.2420833 },
+  { id: 'warren',   name: 'Warren College',     x: -7.56, z: -6.79, w: 1.8, d: 1.3, h: 0.65, lat: 32.88086208, lon: -117.2343993 },
   { id: 'libwalk',  name: 'Library Walk',       x: -1.64, z:  0.30, w: 0.15, d: 4, h: 0.02, lat: 32.8806, lon: -117.237 },
 ]
 
@@ -411,52 +359,13 @@ const DINING_HALLS = [
   { id: 'dh-roots',   name: 'Roots',         x:  0.36,  z:  8.53,  w: 0.9, d: 0.7, h: 0.45, lat: 32.88056943, lon: -117.2424636 },
   { id: 'dh-goodys',  name: "Goody's",       x: -5.56,  z:  4.54,  w: 0.9, d: 0.7, h: 0.45, lat: 32.88219792, lon: -117.2396886 },
   { id: 'dh-ventanas', name: 'Ventanas',     x:-11.51,  z:  8.79,  w: 0.9, d: 0.7, h: 0.45, lat: 32.88622037, lon: -117.2425096 },
-  { id: 'dh-concessions', name: 'Concessions', x:-11.29, z:  2.59,  w: 0.9, d: 0.7, h: 0.45, lat: 32.8857, lon: -117.24 },
+  { id: 'dh-concessions', name: 'Concessions', x:-11.29, z:  2.59,  w: 0.9, d: 0.7, h: 0.45, lat: 32.8865, lon: -117.241 },
   { id: 'dh-bistro',  name: 'Bistro',        x:-15.68,  z:  6.73,  w: 0.9, d: 0.7, h: 0.45, lat: 32.88809923, lon: -117.2420583 },
   { id: 'dh-canyon',  name: 'Canyon Vista',  x: -7.56,  z: -4.95,  w: 0.9, d: 0.7, h: 0.45, lat: 32.88408482, lon: -117.2332062 },
   { id: 'dh-price',   name: 'Price Center Dining', x: -0.19, z: -0.20, w: 0.9, d: 0.7, h: 0.45, lat: 32.87991209, lon: -117.2365567 },
-  // Added for guided flow (lat/lon are used only for distance calculations)
-  { id: 'dh-sixth',   name: 'Sixth Dining Commons', x: -1.2, z: 6.6, w: 0.9, d: 0.7, h: 0.45, lat: 32.8804748, lon: -117.2421702 },
-  { id: 'dh-ocean',   name: 'OceanView Terrace',    x: -4.8, z: 6.8, w: 0.9, d: 0.7, h: 0.45, lat: 32.88314, lon: -117.2427 },
 ]
 
-const SECTION_IDS = new Set(Object.keys(SECTION_BUILDINGS))
-const DINING_HALL_IDS = new Set(DINING_HALLS.map(d => d.id))
-
-const SECTION_BUILDING_LOCATIONS = (() => {
-  const res = []
-  for (const sec of LANDMARKS) {
-    const buildings = sec.buildings
-    if (!Array.isArray(buildings) || buildings.length === 0) continue
-    const lat0 = sec.lat
-    const lon0 = sec.lon
-    const cos = Math.cos((lat0 ?? 32.88) * Math.PI / 180)
-    for (let i = 0; i < buildings.length; i++) {
-      const name = buildings[i]
-      const rng = seededRng(`bld:${sec.id}:${i}`)
-      const angle = rng() * Math.PI * 2
-      const radiusM = 60 + rng() * 160
-      const dxM = Math.cos(angle) * radiusM
-      const dzM = Math.sin(angle) * radiusM
-      const x = sec.x + dxM / METERS_PER_UNIT
-      const z = sec.z + dzM / METERS_PER_UNIT
-      const lat = lat0 != null ? (lat0 + (dzM / 111320)) : null
-      const lon = lon0 != null ? (lon0 + (dxM / (111320 * cos))) : null
-      res.push({
-        id: buildingId(sec.id, i),
-        name,
-        x, z,
-        w: 0.7, d: 0.55, h: 0.55,
-        lat, lon,
-        sectionId: sec.id,
-        isBuildingDestination: true,
-      })
-    }
-  }
-  return res
-})()
-
-const ALL_LOCATIONS = [...LANDMARKS, ...DINING_HALLS, ...SECTION_BUILDING_LOCATIONS]
+const ALL_LOCATIONS = [...LANDMARKS, ...DINING_HALLS]
 
 /* ═══════════════════════════════════════════════
    Holographic campus grid
@@ -516,8 +425,8 @@ function CampusGrid() {
         <lineBasicMaterial color={ACCENT} transparent opacity={0.05} />
       </lineSegments>
 
-      {/* Satellite image plane — red-tinted holographic projection (no raycast) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} raycast={() => null}>
+      {/* Satellite image plane — red-tinted holographic projection */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
         <planeGeometry args={[MAP_W, MAP_H]} />
         <meshStandardMaterial
           map={campusTex}
@@ -528,8 +437,8 @@ function CampusGrid() {
         />
       </mesh>
 
-      {/* Scanline overlay (no raycast) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]} raycast={() => null}>
+      {/* Scanline overlay */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]}>
         <planeGeometry args={[MAP_W, MAP_H]} />
         <meshBasicMaterial
           map={scanTex}
@@ -543,8 +452,8 @@ function CampusGrid() {
         <lineBasicMaterial color={ACCENT} transparent opacity={0.30} />
       </lineSegments>
 
-      {/* Outer glow band around the map edge (no raycast) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} raycast={() => null}>
+      {/* Outer glow band around the map edge */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
         <planeGeometry args={[MAP_W + 1.5, MAP_H + 1.5]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={0.25}
@@ -555,8 +464,8 @@ function CampusGrid() {
       {/* Red particles evaporating from bottom — floating effect */}
       <EvaporatingParticles />
 
-      {/* Dark ground plane (no raycast) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} raycast={() => null}>
+      {/* Dark ground plane */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
         <circleGeometry args={[28, 64]} />
         <meshStandardMaterial color="#020204" metalness={0.95} roughness={0.4} />
       </mesh>
@@ -595,7 +504,7 @@ function EvaporatingParticles() {
     ref.current.geometry.attributes.position.needsUpdate = true
   })
   return (
-    <points ref={ref} raycast={() => null}>
+    <points ref={ref}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -627,24 +536,14 @@ function seededRng(str) {
   return () => { s = (s * 16807 + 11) % 2147483647; return (s & 0x7fffffff) / 2147483647 }
 }
 
-function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright = false }) {
+function CampusBuilding({ landmark, selected, onSelect }) {
   const { id, x, z, w, d, h, isGeisel, name } = landmark
   const [hovered, setHovered] = useState(false)
-  const gRef = useRef(null)
-  const y = useRef(0)
-  const sunk = lift < -0.5
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
     onSelect(id)
   }, [onSelect, id])
-
-  useFrame((_, delta) => {
-    if (!gRef.current) return
-    const target = lift
-    y.current += (target - y.current) * Math.min(1, delta * 8.5)
-    gRef.current.position.set(x, 0.03 + y.current, z)
-  })
 
   const cluster = useMemo(() => {
     if (h < 0.05 || isGeisel) return []
@@ -666,15 +565,13 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
   if (isGeisel) {
     const gH = 4.4 * GEISEL_SCALE
     return (
-      <group ref={gRef} position={[x, 0.03, z]}>
+      <group position={[x, 0.03, z]}>
         <group scale={[GEISEL_SCALE, GEISEL_SCALE, GEISEL_SCALE]}>
           <GeiselModel />
         </group>
-        <mesh
-          onClick={sunk ? undefined : handleClick}
-          onPointerOver={sunk ? undefined : () => setHovered(true)}
-          onPointerOut={sunk ? undefined : () => setHovered(false)}
-          raycast={sunk ? () => null : undefined}
+        <mesh onClick={handleClick}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
         >
           <cylinderGeometry args={[1.3, 1.3, gH, 8]} />
           <meshStandardMaterial transparent opacity={0} depthWrite={false} />
@@ -717,7 +614,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
 
   if (id === 'libwalk') {
     return (
-      <group ref={gRef} position={[x, 0.02, z]}>
+      <group position={[x, 0.02, z]}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[w, d]} />
           <meshStandardMaterial
@@ -741,27 +638,24 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
   const wfOp = selected ? 0.65 : hovered ? 0.45 : 0.30
   const fillOp = selected ? 0.14 : hovered ? 0.09 : 0.05
   const edgeOp = selected ? 0.60 : hovered ? 0.45 : 0.35
-  const boost = forcedBright ? 1.35 : 1
 
   return (
-    <group ref={gRef} position={[x, 0.03, z]}>
+    <group position={[x, 0.03, z]}>
       {/* Invisible click target covering full footprint */}
-      <mesh
-        position={[0, tallest / 2, 0]}
-        onClick={sunk ? undefined : handleClick}
-        onPointerOver={sunk ? undefined : () => setHovered(true)}
-        onPointerOut={sunk ? undefined : () => setHovered(false)}
-        raycast={sunk ? () => null : undefined}
+      <mesh position={[0, tallest / 2, 0]}
+        onClick={handleClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
       >
         <boxGeometry args={[w, tallest, d]} />
         <meshStandardMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Base platform slab (no raycast — use click target) */}
-      <mesh position={[0, 0, 0]} raycast={() => null}>
+      {/* Base platform slab */}
+      <mesh position={[0, 0, 0]}>
         <boxGeometry args={[w + 0.06, 0.015, d + 0.06]} />
         <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5 * boost}
+          color={ACCENT} emissive={ACCENT} emissiveIntensity={0.5}
           transparent opacity={0.10} toneMapped={false}
         />
       </mesh>
@@ -769,25 +663,25 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
       {/* Building cluster */}
       {cluster.map((b, bi) => (
         <group key={`b-${bi}`} position={[b.ox, b.h / 2, b.oz]}>
-          {/* Transparent fill (no raycast) */}
-          <mesh raycast={() => null}>
+          {/* Transparent fill */}
+          <mesh>
             <boxGeometry args={[b.w, b.h, b.d]} />
             <meshStandardMaterial
               color={ACCENT} transparent opacity={fillOp}
               metalness={0.85} roughness={0.15}
             />
           </mesh>
-          {/* Wireframe (no raycast) */}
-          <mesh raycast={() => null}>
+          {/* Wireframe */}
+          <mesh>
             <boxGeometry args={[b.w, b.h, b.d]} />
             <meshStandardMaterial color={ACCENT} wireframe transparent opacity={wfOp} />
           </mesh>
           {/* Corner edge glow */}
           {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], ci) => (
-            <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]} raycast={() => null}>
+            <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]}>
               <boxGeometry args={[0.022, b.h, 0.022]} />
               <meshStandardMaterial
-                color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8 * boost}
+                color={ACCENT} emissive={ACCENT} emissiveIntensity={1.8}
                 transparent opacity={edgeOp} toneMapped={false}
               />
             </mesh>
@@ -795,21 +689,21 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
           {/* Top edge glow (tallest building only) */}
           {bi === 0 && (
             <>
-              <mesh position={[0, b.h / 2, -b.d / 2]} raycast={() => null}>
+              <mesh position={[0, b.h / 2, -b.d / 2]}>
                 <boxGeometry args={[b.w, 0.014, 0.014]} />
-                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
-              <mesh position={[0, b.h / 2, b.d / 2]} raycast={() => null}>
+              <mesh position={[0, b.h / 2, b.d / 2]}>
                 <boxGeometry args={[b.w, 0.014, 0.014]} />
-                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
-              <mesh position={[-b.w / 2, b.h / 2, 0]} raycast={() => null}>
+              <mesh position={[-b.w / 2, b.h / 2, 0]}>
                 <boxGeometry args={[0.014, 0.014, b.d]} />
-                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
-              <mesh position={[b.w / 2, b.h / 2, 0]} raycast={() => null}>
+              <mesh position={[b.w / 2, b.h / 2, 0]}>
                 <boxGeometry args={[0.014, 0.014, b.d]} />
-                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
             </>
           )}
@@ -818,7 +712,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
 
       {/* Selection ring */}
       {selected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} raycast={() => null}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
           <ringGeometry args={[ringR, ringR + 0.12, 32]} />
           <meshStandardMaterial
             color={ACCENT} emissive={ACCENT} emissiveIntensity={2.5}
@@ -828,7 +722,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
       )}
 
       {/* Vertical marker beam */}
-      <mesh position={[0, tallest + 0.25, 0]} raycast={() => null}>
+      <mesh position={[0, tallest + 0.25, 0]}>
         <cylinderGeometry args={[0.01, 0.01, 0.5, 4]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT} emissiveIntensity={1}
@@ -836,7 +730,7 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
         />
       </mesh>
       {/* Marker sphere */}
-      <mesh position={[0, tallest + 0.55, 0]} raycast={() => null}>
+      <mesh position={[0, tallest + 0.55, 0]}>
         <sphereGeometry args={[0.05, 8, 8]} />
         <meshStandardMaterial
           color={ACCENT} emissive={ACCENT}
@@ -864,12 +758,9 @@ function CampusBuilding({ landmark, selected, onSelect, lift = 0, forcedBright =
 
 const DH_COLOR = '#ffffff'
 
-function DiningHallMarker({ hall, selected, onSelect, lift = 0, forcedBright = false, showUnderBeam = false }) {
+function DiningHallMarker({ hall, selected, onSelect }) {
   const { id, x, z, name, w = 0.9, d = 0.7, h = 0.45 } = hall
   const [hovered, setHovered] = useState(false)
-  const gRef = useRef(null)
-  const y = useRef(0)
-  const sunk = lift < -0.5
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
@@ -897,42 +788,22 @@ function DiningHallMarker({ hall, selected, onSelect, lift = 0, forcedBright = f
   const wfOp = selected ? 0.55 : hovered ? 0.40 : 0.28
   const fillOp = selected ? 0.12 : hovered ? 0.08 : 0.04
   const edgeOp = selected ? 0.50 : hovered ? 0.38 : 0.30
-  const boost = forcedBright ? 1.6 : 1
-
-  useFrame((_, delta) => {
-    if (!gRef.current) return
-    const target = lift
-    y.current += (target - y.current) * Math.min(1, delta * 10.5)
-    gRef.current.position.set(x, 0.03 + y.current, z)
-  })
 
   return (
-    <group ref={gRef} position={[x, 0.03, z]}>
-      <mesh
-        position={[0, tallest / 2, 0]}
-        onClick={sunk ? undefined : handleClick}
-        onPointerOver={sunk ? undefined : () => setHovered(true)}
-        onPointerOut={sunk ? undefined : () => setHovered(false)}
-        raycast={sunk ? () => null : undefined}
+    <group position={[x, 0.03, z]}>
+      <mesh position={[0, tallest / 2, 0]}
+        onClick={handleClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
       >
         <boxGeometry args={[w, tallest, d]} />
         <meshStandardMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {showUnderBeam && (
-        <mesh position={[0, -Math.max(0, lift) * 0.55, 0]}>
-          <cylinderGeometry args={[0.035, 0.035, Math.max(0.06, Math.max(0, lift) * 1.1), 10]} />
-          <meshStandardMaterial
-            color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1.8 * boost}
-            transparent opacity={Math.min(0.55, 0.15 + Math.max(0, lift) * 0.25)} toneMapped={false}
-          />
-        </mesh>
-      )}
-
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[w + 0.04, 0.012, d + 0.04]} />
         <meshStandardMaterial
-          color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={0.6 * boost}
+          color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={0.5}
           transparent opacity={0.08} toneMapped={false}
         />
       </mesh>
@@ -954,7 +825,7 @@ function DiningHallMarker({ hall, selected, onSelect, lift = 0, forcedBright = f
             <mesh key={ci} position={[sx * b.w / 2, 0, sz * b.d / 2]}>
               <boxGeometry args={[0.018, b.h, 0.018]} />
               <meshStandardMaterial
-                color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1.5 * boost}
+                color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1.5}
                 transparent opacity={edgeOp} toneMapped={false}
               />
             </mesh>
@@ -963,19 +834,19 @@ function DiningHallMarker({ hall, selected, onSelect, lift = 0, forcedBright = f
             <>
               <mesh position={[0, b.h / 2, -b.d / 2]}>
                 <boxGeometry args={[b.w, 0.012, 0.012]} />
-                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
               <mesh position={[0, b.h / 2, b.d / 2]}>
                 <boxGeometry args={[b.w, 0.012, 0.012]} />
-                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
               <mesh position={[-b.w / 2, b.h / 2, 0]}>
                 <boxGeometry args={[0.012, 0.012, b.d]} />
-                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
               <mesh position={[b.w / 2, b.h / 2, 0]}>
                 <boxGeometry args={[0.012, 0.012, b.d]} />
-                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1 * boost} transparent opacity={edgeOp} toneMapped={false} />
+                <meshStandardMaterial color={DH_COLOR} emissive={DH_COLOR} emissiveIntensity={1} transparent opacity={edgeOp} toneMapped={false} />
               </mesh>
             </>
           )}
@@ -1024,9 +895,8 @@ function DiningHallMarker({ hall, selected, onSelect, lift = 0, forcedBright = f
    Path connector between two selected locations
    ═══════════════════════════════════════════════ */
 
-function RouteLine({ origin, destination, visible }) {
+function RouteLine({ origin, destination }) {
   const geo = useMemo(() => {
-    if (!visible) return null
     if (!origin || !destination) return null
     const o = ALL_LOCATIONS.find(l => l.id === origin)
     const d = ALL_LOCATIONS.find(l => l.id === destination)
@@ -1036,7 +906,7 @@ function RouteLine({ origin, destination, visible }) {
       o.x, 0.04, o.z, d.x, 0.04, d.z,
     ], 3))
     return g
-  }, [origin, destination, visible])
+  }, [origin, destination])
 
   if (!geo) return null
 
@@ -1051,15 +921,10 @@ function RouteLine({ origin, destination, visible }) {
    Campus camera — bird's-eye orbit + transition
    ═══════════════════════════════════════════════ */
 
-function CampusCamera({
-  origin,
-  destination,
-  pendingSection,
-  routeFocusEnabled,
-  onTransitionDone,
-  onSectionZoomDone,
-  onResetToOrbitDone,
-}) {
+const ORBIT_RADIUS = 24
+const ORBIT_HEIGHT = 15
+
+function CampusCamera({ origin, destination, onTransitionDone, resetRequested, onResetComplete }) {
   const { camera } = useThree()
   const angle = useRef(0)
   const phase = useRef('orbit')
@@ -1070,28 +935,10 @@ function CampusCamera({
   const targetLook = useRef(new THREE.Vector3())
   const prevOrigin = useRef(null)
   const prevDest = useRef(null)
-  const prevSection = useRef(null)
-  const resetToken = useRef(0)
 
   useFrame(({ clock }) => {
-    const hasRoute = origin && destination && routeFocusEnabled
-    const hasSection = !!pendingSection
-
-    if (hasSection && phase.current === 'orbit') {
-      const s = LANDMARKS.find(l => l.id === pendingSection)
-      if (!s) return
-
-      phase.current = 'sectionTransitioning'
-      t0.current = clock.elapsedTime
-      startPos.current.copy(camera.position)
-      startLook.current.set(0, 0, 0)
-
-      const camDir = new THREE.Vector3(camera.position.x, 0, camera.position.z).normalize()
-      const approach = camDir.lengthSq() > 0.0001 ? camDir : new THREE.Vector3(0.6, 0, 0.8)
-      targetPos.current.set(s.x + approach.x * 6.5, 7.0, s.z + approach.z * 6.5)
-      targetLook.current.set(s.x, 0.4, s.z)
-      prevSection.current = pendingSection
-    }
+    const hasRoute = origin && destination
+    const shouldReset = !hasRoute || resetRequested
 
     if (hasRoute && phase.current === 'orbit') {
       phase.current = 'transitioning'
@@ -1114,29 +961,14 @@ function CampusCamera({
       prevDest.current = destination
     }
 
-    if (!hasSection && !hasRoute && phase.current !== 'orbit') {
+    if (shouldReset && (phase.current === 'focused' || phase.current === 'transitioning')) {
       phase.current = 'resetting'
       t0.current = clock.elapsedTime
       startPos.current.copy(camera.position)
-      const curLook = targetLook.current.clone()
-      startLook.current.copy(curLook)
+      startLook.current.copy(targetLook.current)
       const a = angle.current
-      targetPos.current.set(Math.sin(a) * 24, 15, Math.cos(a) * 24)
+      targetPos.current.set(Math.sin(a) * ORBIT_RADIUS, ORBIT_HEIGHT, Math.cos(a) * ORBIT_RADIUS)
       targetLook.current.set(0, 0, 0)
-      resetToken.current += 1
-    }
-
-    if (phase.current === 'sectionTransitioning') {
-      const raw = Math.min(1, (clock.elapsedTime - t0.current) / 1.15)
-      const t = easeInOutCubic(raw)
-      camera.position.lerpVectors(startPos.current, targetPos.current, t)
-      const look = new THREE.Vector3().lerpVectors(startLook.current, targetLook.current, t)
-      camera.lookAt(look)
-      if (raw >= 1) {
-        phase.current = 'sectionFocused'
-        onSectionZoomDone?.()
-      }
-      return
     }
 
     if (phase.current === 'transitioning') {
@@ -1153,14 +985,21 @@ function CampusCamera({
     }
 
     if (phase.current === 'resetting') {
-      const raw = Math.min(1, (clock.elapsedTime - t0.current) / 1.2)
-      const t = easeInOutCubic(raw)
+      const duration = 1.85
+      const raw = Math.min(1, (clock.elapsedTime - t0.current) / duration)
+      const t = easeOutCubic(raw)
       camera.position.lerpVectors(startPos.current, targetPos.current, t)
       const look = new THREE.Vector3().lerpVectors(startLook.current, targetLook.current, t)
       camera.lookAt(look)
       if (raw >= 1) {
         phase.current = 'orbit'
-        onResetToOrbitDone?.(resetToken.current)
+        camera.position.set(
+          Math.sin(angle.current) * ORBIT_RADIUS,
+          ORBIT_HEIGHT,
+          Math.cos(angle.current) * ORBIT_RADIUS
+        )
+        camera.lookAt(0, 0, 0)
+        onResetComplete?.()
       }
       return
     }
@@ -1170,16 +1009,11 @@ function CampusCamera({
       return
     }
 
-    if (phase.current === 'sectionFocused') {
-      camera.lookAt(targetLook.current)
-      return
-    }
-
     angle.current += 0.0032
     camera.position.set(
-      Math.sin(angle.current) * 24,
-      15,
-      Math.cos(angle.current) * 24
+      Math.sin(angle.current) * ORBIT_RADIUS,
+      ORBIT_HEIGHT,
+      Math.cos(angle.current) * ORBIT_RADIUS
     )
     camera.lookAt(0, 0, 0)
   })
@@ -1206,158 +1040,7 @@ function CampusLighting() {
    Campus scene content
    ═══════════════════════════════════════════════ */
 
-function BuildingSelector({ sectionId, onPickBuilding }) {
-  const section = LANDMARKS.find(l => l.id === sectionId)
-  if (!section || !Array.isArray(section.buildings) || section.buildings.length === 0) return null
-
-  const { x, z, name } = section
-
-  return (
-    <group position={[x, 0.03, z]}>
-      <Html
-        center
-        position={[0, 2.0, 0]}
-        pointerEvents="auto"
-        zIndexRange={[1000000, 1000000]}
-        style={{ pointerEvents: 'auto' }}
-      >
-        <div
-          style={{
-          width: 320,
-          background: 'linear-gradient(165deg, rgba(25,25,30,0.92) 0%, rgba(10,10,14,0.95) 100%)',
-          border: '1px solid rgba(255,45,45,0.16)',
-          boxShadow: '0 24px 70px rgba(0,0,0,0.75), 0 0 60px rgba(255,45,45,0.08)',
-          borderRadius: 18,
-          padding: '16px 14px',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          color: '#fff',
-          fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
-          pointerEvents: 'auto',
-        }}>
-          <div style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.35)',
-            marginBottom: 10,
-          }}>Select a building in</div>
-          <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12 }}>{name}</div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            maxHeight: 240,
-            overflow: 'auto',
-            paddingRight: 4,
-          }}>
-            {section.buildings.map((b, i) => (
-              <button
-                key={`${sectionId}-${i}`}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  e.preventDefault()
-                  onPickBuilding(buildingId(sectionId, i))
-                }}
-                style={{
-                  textAlign: 'left',
-                  width: '100%',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#fff',
-                  padding: '10px 12px',
-                  borderRadius: 12,
-                  fontFamily: 'inherit',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'transform 0.15s ease, border-color 0.2s ease, background 0.2s ease',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
-                  e.currentTarget.style.borderColor = 'rgba(255,45,45,0.22)'
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-                }}
-              >
-                {b}
-              </button>
-            ))}
-          </div>
-        </div>
-      </Html>
-    </group>
-  )
-}
-
-function BuildingDestinationMarker({ destinationId }) {
-  if (!destinationId || !destinationId.startsWith('bld-')) return null
-  const loc = ALL_LOCATIONS.find(l => l.id === destinationId)
-  if (!loc) return null
-
-  const { x, z, name, h = 0.55 } = loc
-  const tallest = h
-
-  return (
-    <group position={[x, 0.03, z]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <ringGeometry args={[0.55, 0.72, 32]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={2.8}
-          transparent opacity={0.55} toneMapped={false} side={THREE.DoubleSide}
-        />
-      </mesh>
-      <mesh position={[0, tallest + 0.22, 0]}>
-        <cylinderGeometry args={[0.012, 0.012, 0.5, 4]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={1.2}
-          transparent opacity={0.55} toneMapped={false}
-        />
-      </mesh>
-      <mesh position={[0, tallest + 0.55, 0]}>
-        <sphereGeometry args={[0.055, 10, 10]} />
-        <meshStandardMaterial
-          color={ACCENT} emissive={ACCENT} emissiveIntensity={3.2} toneMapped={false}
-        />
-      </mesh>
-      <pointLight position={[0, tallest + 0.55, 0]} color={ACCENT} intensity={0.7} distance={3} />
-      <Html center position={[0, tallest + 0.86, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
-          fontSize: 10, fontWeight: 650, whiteSpace: 'nowrap',
-          textShadow: '0 0 10px rgba(255,45,45,0.55)',
-          opacity: 0.95,
-        }}>{name}</div>
-      </Html>
-    </group>
-  )
-}
-
-function CampusSceneContent({
-  origin,
-  destination,
-  pendingSection,
-  showBuildingSelector,
-  onPickBuilding,
-  onBuildingClick,
-  onTransitionDone,
-  routeFocusEnabled,
-  onSectionZoomDone,
-  onResetToOrbitDone,
-  routeVisible,
-  sectionLift,
-  diningLift,
-  sectionBright,
-  diningBright,
-  diningUnderBeams,
-}) {
+function CampusSceneContent({ origin, destination, onBuildingClick, onTransitionDone, resetRequested, onResetComplete }) {
   return (
     <>
       <color attach="background" args={['#000000']} />
@@ -1366,22 +1049,18 @@ function CampusSceneContent({
       <CampusCamera
         origin={origin}
         destination={destination}
-        pendingSection={pendingSection}
-        routeFocusEnabled={routeFocusEnabled}
         onTransitionDone={onTransitionDone}
-        onSectionZoomDone={onSectionZoomDone}
-        onResetToOrbitDone={onResetToOrbitDone}
+        resetRequested={resetRequested}
+        onResetComplete={onResetComplete}
       />
       <CampusGrid />
-      <RouteLine origin={origin} destination={destination} visible={routeVisible} />
+      <RouteLine origin={origin} destination={destination} />
       {LANDMARKS.map(lm => (
         <CampusBuilding
           key={lm.id}
           landmark={lm}
           selected={lm.id === origin || lm.id === destination}
           onSelect={onBuildingClick}
-          lift={sectionLift?.[lm.id] ?? 0}
-          forcedBright={!!sectionBright?.[lm.id]}
         />
       ))}
       {DINING_HALLS.map(dh => (
@@ -1390,17 +1069,8 @@ function CampusSceneContent({
           hall={dh}
           selected={dh.id === origin || dh.id === destination}
           onSelect={onBuildingClick}
-          lift={diningLift?.[dh.id] ?? 0}
-          forcedBright={!!diningBright?.[dh.id]}
-          showUnderBeam={!!diningUnderBeams?.[dh.id]}
         />
       ))}
-
-      {showBuildingSelector && pendingSection && (
-        <BuildingSelector sectionId={pendingSection} onPickBuilding={onPickBuilding} />
-      )}
-
-      <BuildingDestinationMarker destinationId={destination} />
     </>
   )
 }
@@ -1502,13 +1172,7 @@ function StatsPanel({ origin, destination, visible }) {
    Campus HUD overlay
    ═══════════════════════════════════════════════ */
 
-function CampusHUD({
-  statusText,
-  showBegin,
-  onBegin,
-  showExploreMore,
-  onExploreMore,
-}) {
+function CampusHUD({ origin, destination, onExploreMore }) {
   const base = {
     fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
     color: 'rgba(255,255,255,0.45)',
@@ -1516,6 +1180,12 @@ function CampusHUD({
     fontSize: 10,
     fontWeight: 500,
   }
+
+  const prompt = !origin
+    ? 'Select an origin location'
+    : !destination
+      ? 'Now select a destination'
+      : null
 
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none' }}>
@@ -1534,7 +1204,7 @@ function CampusHUD({
       </div>
 
       {/* Bottom center prompt */}
-      {statusText && (
+      {prompt && (
         <div style={{
           position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
           fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.40)',
@@ -1543,46 +1213,11 @@ function CampusHUD({
           padding: '10px 24px', borderRadius: 12,
           background: 'rgba(255,255,255,0.03)',
           border: '1px solid rgba(255,255,255,0.06)',
-        }}>{statusText}</div>
+        }}>{prompt}</div>
       )}
 
-      {/* Begin Statistics button */}
-      {showBegin && (
-        <div style={{
-          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
-          pointerEvents: 'auto',
-        }}>
-          <button
-            onClick={onBegin}
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 14, fontWeight: 700,
-              color: '#fff',
-              letterSpacing: '0.02em',
-              padding: '13px 26px',
-              borderRadius: 16,
-              border: 'none',
-              background: ACCENT,
-              boxShadow: '0 0 28px rgba(255,42,42,0.40)',
-              cursor: 'pointer',
-              transition: 'box-shadow 0.3s, transform 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 42px rgba(255,42,42,0.55)'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 28px rgba(255,42,42,0.40)'
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
-          >
-            Begin Statistics
-          </button>
-        </div>
-      )}
-
-      {/* Explore more routes button */}
-      {showExploreMore && (
+      {/* Explore more routes button when both selected */}
+      {origin && destination && (
         <div style={{
           position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
           pointerEvents: 'auto',
@@ -1591,30 +1226,24 @@ function CampusHUD({
             onClick={onExploreMore}
             style={{
               fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 13, fontWeight: 650,
+              fontSize: 13, fontWeight: 600,
               color: '#fff',
               letterSpacing: '0.02em',
               padding: '12px 24px',
               borderRadius: 14,
-              border: '1px solid rgba(255,255,255,0.10)',
-              background: 'rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(18px)',
-              WebkitBackdropFilter: 'blur(18px)',
-              boxShadow: '0 24px 70px rgba(0,0,0,0.55), 0 0 36px rgba(255,42,42,0.08)',
+              border: 'none',
+              background: ACCENT,
+              boxShadow: '0 0 24px rgba(255,42,42,0.35)',
               cursor: 'pointer',
-              transition: 'box-shadow 0.3s, transform 0.2s, background 0.2s, border-color 0.2s',
+              transition: 'box-shadow 0.3s, transform 0.2s',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.boxShadow = '0 24px 70px rgba(0,0,0,0.55), 0 0 44px rgba(255,42,42,0.16)'
+              e.currentTarget.style.boxShadow = '0 0 36px rgba(255,42,42,0.5)'
               e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
-              e.currentTarget.style.borderColor = 'rgba(255,42,42,0.22)'
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.boxShadow = '0 24px 70px rgba(0,0,0,0.55), 0 0 36px rgba(255,42,42,0.08)'
+              e.currentTarget.style.boxShadow = '0 0 24px rgba(255,42,42,0.35)'
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'
             }}
           >
             Explore more routes
@@ -1667,121 +1296,27 @@ function InjectKeyframes() {
    ═══════════════════════════════════════════════ */
 
 export default function HeroScene() {
-  const [flow, setFlow] = useState('idle') // idle → chooseDining → chooseSection → zoomSection → chooseBuilding → returningToOrbit → done
   const [origin, setOrigin] = useState(null)
   const [destination, setDestination] = useState(null)
-  const [pendingSection, setPendingSection] = useState(null)
-  const [showBuildingSelector, setShowBuildingSelector] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [resetRequested, setResetRequested] = useState(false)
 
-  const statusText = flow === 'chooseDining'
-    ? 'Choose a dining hall'
-    : flow === 'chooseSection'
-      ? 'Choose a destination section'
-      : null
-
-  const routeVisible = flow === 'done'
-
-  const diningLift = useMemo(() => {
-    const m = {}
-    for (const dh of DINING_HALLS) {
-      if (flow === 'chooseDining') m[dh.id] = 0.7
-      else if (flow !== 'idle' && origin) m[dh.id] = dh.id === origin ? 0.7 : -1.0
-      else m[dh.id] = 0
-    }
-    return m
-  }, [flow, origin])
-
-  const diningBright = useMemo(() => {
-    const m = {}
-    for (const dh of DINING_HALLS) {
-      m[dh.id] = flow === 'chooseDining' || (origin && dh.id === origin)
-    }
-    return m
-  }, [flow, origin])
-
-  const diningUnderBeams = useMemo(() => {
-    const m = {}
-    for (const dh of DINING_HALLS) {
-      m[dh.id] = flow === 'chooseDining' || (origin && dh.id === origin)
-    }
-    return m
-  }, [flow, origin])
-
-  const sectionLift = useMemo(() => {
-    const m = {}
-    for (const lm of LANDMARKS) {
-      if (flow === 'chooseDining') m[lm.id] = -1.0
-      else if (flow === 'chooseSection' && !SECTION_IDS.has(lm.id)) m[lm.id] = -1.0
-      else if (flow !== 'idle' && SECTION_IDS.has(lm.id)) m[lm.id] = 0.85
-      else m[lm.id] = 0
-    }
-    return m
-  }, [flow])
-
-  const sectionBright = useMemo(() => {
-    const m = {}
-    for (const lm of LANDMARKS) {
-      m[lm.id] = (flow !== 'idle' && flow !== 'chooseDining' && SECTION_IDS.has(lm.id))
-    }
-    return m
-  }, [flow])
-
-  const resetFlow = useCallback(() => {
-    setFlow('idle')
-    setOrigin(null)
-    setDestination(null)
-    setPendingSection(null)
-    setShowBuildingSelector(false)
-    setShowStats(false)
-  }, [])
-
-  const handleBegin = useCallback(() => {
-    resetFlow()
-    setFlow('chooseDining')
-  }, [resetFlow])
-
-  const handleMapClick = useCallback((id) => {
+  const handleBuildingClick = useCallback((id) => {
     if (id === 'libwalk') return
-    if (flow === 'idle') return
-
-    if (flow === 'chooseDining') {
-      if (!DINING_HALL_IDS.has(id)) return
+    if (!origin) {
       setOrigin(id)
-      setFlow('chooseSection')
-      return
+    } else if (!destination && id !== origin) {
+      setDestination(id)
+    } else {
+      setOrigin(null)
+      setDestination(null)
+      setShowStats(false)
     }
+  }, [origin, destination])
 
-    if (flow === 'chooseSection') {
-      if (!SECTION_IDS.has(id)) return
-      setPendingSection(id)
-      setFlow('zoomSection')
-      return
-    }
-  }, [flow])
-
-  const handleSectionZoomDone = useCallback(() => {
-    if (flow !== 'zoomSection') return
-    setShowBuildingSelector(true)
-    setFlow('chooseBuilding')
-  }, [flow])
-
-  const handlePickBuilding = useCallback((buildingLocId) => {
-    if (!buildingLocId) return
-    setDestination(buildingLocId)
-    setShowBuildingSelector(false)
-    setPendingSection(null)
-    setShowStats(false)
-    setFlow('returningToOrbit')
-  }, [])
-
-  const handleResetToOrbitDone = useCallback(() => {
-    if (flow !== 'returningToOrbit') return
-    setFlow('done')
+  const handleTransitionDone = useCallback(() => {
     setShowStats(true)
-  }, [flow])
-
-  const containerRef = useRef(null)
+  }, [])
 
   return (
     <>
@@ -1791,42 +1326,32 @@ export default function HeroScene() {
         position: 'relative', overflow: 'hidden',
         background: '#000',
       }}>
-        <div ref={containerRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }}>
+        <div style={{ position: 'absolute', inset: 0 }}>
           <Canvas
             dpr={[1, 1.5]}
             camera={{ position: [0, 15, 24], fov: 40, near: 0.1, far: 200 }}
             style={{ width: '100%', height: '100%' }}
-            onCreated={({ events }) => {
-              if (containerRef.current) events.connect(containerRef.current)
-            }}
           >
             <CampusSceneContent
               origin={origin}
               destination={destination}
-              pendingSection={pendingSection}
-              showBuildingSelector={showBuildingSelector}
-              onPickBuilding={handlePickBuilding}
-              onBuildingClick={handleMapClick}
-              onTransitionDone={() => {}}
-              routeFocusEnabled={false}
-              onSectionZoomDone={handleSectionZoomDone}
-              onResetToOrbitDone={handleResetToOrbitDone}
-              routeVisible={routeVisible}
-              sectionLift={sectionLift}
-              diningLift={diningLift}
-              sectionBright={sectionBright}
-              diningBright={diningBright}
-              diningUnderBeams={diningUnderBeams}
+              onBuildingClick={handleBuildingClick}
+              onTransitionDone={handleTransitionDone}
+              resetRequested={resetRequested}
+              onResetComplete={() => setResetRequested(false)}
             />
           </Canvas>
         </div>
 
         <CampusHUD
-          statusText={statusText}
-          showBegin={flow === 'idle'}
-          onBegin={handleBegin}
-          showExploreMore={flow === 'done'}
-          onExploreMore={resetFlow}
+          origin={origin}
+          destination={destination}
+          onExploreMore={() => {
+            setOrigin(null)
+            setDestination(null)
+            setShowStats(false)
+            setResetRequested(true)
+          }}
         />
         <StatsPanel origin={origin} destination={destination} visible={showStats} />
       </div>
