@@ -1231,12 +1231,10 @@ function CampusHUD({ origin, destination, onExploreMore }) {
         <div style={{ marginTop: 2 }}>117.2340° W</div>
       </div>
 
-      {/* Top right prompt */}
+      {/* Bottom center prompt */}
       {prompt && (
         <div style={{
-          position: 'absolute',
-          top: 86,
-          right: 32,
+          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
           fontSize: 13, fontWeight: 650, color: 'rgba(255,255,255,0.78)',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
           letterSpacing: '0.03em',
@@ -1244,20 +1242,18 @@ function CampusHUD({ origin, destination, onExploreMore }) {
           background: 'linear-gradient(165deg, rgba(255,42,42,0.14) 0%, rgba(255,42,42,0.06) 60%, rgba(255,255,255,0.03) 100%)',
           border: '1px solid rgba(255,42,42,0.22)',
           boxShadow: '0 0 24px rgba(255,42,42,0.16)',
-          maxWidth: 280,
-          textAlign: 'right',
+          maxWidth: 360,
+          textAlign: 'center',
         }}>{prompt}</div>
       )}
 
       {/* Explore more routes button when both selected */}
       {origin && destination && (
         <div style={{
-          position: 'absolute',
-          top: 130,
-          right: 32,
+          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
           pointerEvents: 'auto',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'center',
         }}>
           <button
             onClick={onExploreMore}
