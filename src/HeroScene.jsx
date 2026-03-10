@@ -1231,32 +1231,29 @@ function CampusHUD({ origin, destination, onExploreMore }) {
         <div style={{ marginTop: 2 }}>117.2340° W</div>
       </div>
 
-      {/* Top right prompt */}
+      {/* Bottom center prompt */}
       {prompt && (
         <div style={{
-          position: 'absolute',
-          top: 86,
-          right: 32,
-          fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.40)',
+          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
+          fontSize: 13, fontWeight: 650, color: 'rgba(255,255,255,0.78)',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
           letterSpacing: '0.03em',
           padding: '10px 24px', borderRadius: 12,
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          maxWidth: 280,
-          textAlign: 'right',
+          background: 'linear-gradient(165deg, rgba(255,42,42,0.14) 0%, rgba(255,42,42,0.06) 60%, rgba(255,255,255,0.03) 100%)',
+          border: '1px solid rgba(255,42,42,0.22)',
+          boxShadow: '0 0 24px rgba(255,42,42,0.16)',
+          maxWidth: 360,
+          textAlign: 'center',
         }}>{prompt}</div>
       )}
 
       {/* Explore more routes button when both selected */}
       {origin && destination && (
         <div style={{
-          position: 'absolute',
-          top: 130,
-          right: 32,
+          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
           pointerEvents: 'auto',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'center',
         }}>
           <button
             onClick={onExploreMore}
@@ -1268,14 +1265,17 @@ function CampusHUD({ origin, destination, onExploreMore }) {
               padding: '12px 24px',
               borderRadius: 14,
               border: 'none',
-              background: ACCENT,
+              background: 'linear-gradient(165deg, rgba(255,42,42,0.55) 0%, rgba(255,42,42,0.28) 55%, rgba(255,42,42,0.40) 100%)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              backdropFilter: 'blur(16px) saturate(1.25)',
+              WebkitBackdropFilter: 'blur(16px) saturate(1.25)',
               boxShadow: '0 0 24px rgba(255,42,42,0.35)',
               cursor: 'pointer',
               transition: 'box-shadow 0.3s, transform 0.2s',
               whiteSpace: 'nowrap',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 36px rgba(255,42,42,0.5)'
+              e.currentTarget.style.boxShadow = '0 0 42px rgba(255,42,42,0.55)'
               e.currentTarget.style.transform = 'translateY(-2px)'
             }}
             onMouseOut={(e) => {
