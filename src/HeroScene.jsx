@@ -612,7 +612,7 @@ function CampusBuilding({ landmark, selected, onSelect, showLabel }) {
         </mesh>
         <pointLight position={[0, gH + 0.5, 0]} color={ACCENT} intensity={selected ? 0.8 : 0.2} distance={4} />
         {showLabel && (
-          <Html center position={[0, gH + 0.8, 0]} style={{ pointerEvents: 'none' }}>
+          <Html center wrapperClass="campus-label" zIndexRange={[0, 50]} position={[0, gH + 0.8, 0]} style={{ pointerEvents: 'none' }}>
             <div style={{
               color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
               fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
@@ -636,7 +636,7 @@ function CampusBuilding({ landmark, selected, onSelect, showLabel }) {
           />
         </mesh>
         {showLabel && (
-          <Html center position={[0, 0.4, 0]} style={{ pointerEvents: 'none' }}>
+          <Html center wrapperClass="campus-label" zIndexRange={[0, 50]} position={[0, 0.4, 0]} style={{ pointerEvents: 'none' }}>
             <div style={{
               color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
               fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
@@ -755,7 +755,7 @@ function CampusBuilding({ landmark, selected, onSelect, showLabel }) {
       <pointLight position={[0, tallest + 0.55, 0]} color={ACCENT} intensity={selected ? 0.6 : 0.15} distance={2.5} />
 
       {showLabel && (
-        <Html center position={[0, tallest + 0.8, 0]} style={{ pointerEvents: 'none' }}>
+        <Html center wrapperClass="campus-label" zIndexRange={[0, 50]} position={[0, tallest + 0.8, 0]} style={{ pointerEvents: 'none' }}>
           <div style={{
             color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
@@ -896,7 +896,7 @@ function DiningHallMarker({ hall, selected, onSelect, showLabel }) {
       <pointLight position={[0, tallest + 0.45, 0]} color={DH_COLOR} intensity={selected ? 0.5 : 0.1} distance={2} />
 
       {showLabel && (
-        <Html center position={[0, tallest + 0.7, 0]} style={{ pointerEvents: 'none' }}>
+        <Html center wrapperClass="campus-label" zIndexRange={[0, 50]} position={[0, tallest + 0.7, 0]} style={{ pointerEvents: 'none' }}>
           <div style={{
             color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
@@ -1124,7 +1124,7 @@ function StatsPanel({ origin, destination, visible }) {
 
   return (
     <div style={{
-      position: 'absolute', bottom: 40, right: 40, zIndex: 40, width: 330,
+      position: 'fixed', bottom: 40, right: 40, zIndex: 5000, width: 330,
       background: 'linear-gradient(165deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.06) 100%)',
       backdropFilter: 'blur(24px) saturate(1.2)',
       WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
@@ -1312,6 +1312,10 @@ function InjectKeyframes() {
       }
       .hud-scan-line {
         animation: hudScan 2.4s ease-in-out infinite;
+      }
+      .campus-label {
+        pointer-events: none !important;
+        z-index: 50 !important;
       }
     `}</style>
   )
