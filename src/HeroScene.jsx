@@ -1145,21 +1145,27 @@ function StatsPanel({ origin, destination, visible }) {
       }} />
 
       <div style={{
-        fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.28)',
-        textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 18,
+        fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.34)',
+        textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 10,
       }}>
         Route Analysis
       </div>
 
-      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{o.name}</div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.30)', marginBottom: 20 }}>→ {d.name}</div>
+      <div style={{
+        fontSize: 13,
+        fontWeight: 700,
+        color: 'rgba(255,255,255,0.82)',
+        marginBottom: 20,
+      }}>
+        {o.name} <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 600, margin: '0 6px' }}>TO</span> {d.name}
+      </div>
 
       <div style={rowStyle}>
         <span style={labelStyle}>Distance</span>
         <span style={valueStyle}>{deliveryDistanceMeters} m</span>
       </div>
       <div style={rowStyle}>
-        <span style={labelStyle}>Time saved walking to and fro</span>
+        <span style={labelStyle}>NomNom saved you</span>
         <span style={accentVal}>{walkMin} min</span>
       </div>
 
