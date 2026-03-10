@@ -1231,24 +1231,32 @@ function CampusHUD({ origin, destination, onExploreMore }) {
         <div style={{ marginTop: 2 }}>117.2340° W</div>
       </div>
 
-      {/* Bottom center prompt */}
+      {/* Top right prompt */}
       {prompt && (
         <div style={{
-          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
+          position: 'absolute',
+          top: 86,
+          right: 32,
           fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.40)',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
           letterSpacing: '0.03em',
           padding: '10px 24px', borderRadius: 12,
           background: 'rgba(255,255,255,0.03)',
           border: '1px solid rgba(255,255,255,0.06)',
+          maxWidth: 280,
+          textAlign: 'right',
         }}>{prompt}</div>
       )}
 
       {/* Explore more routes button when both selected */}
       {origin && destination && (
         <div style={{
-          position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)',
+          position: 'absolute',
+          top: 130,
+          right: 32,
           pointerEvents: 'auto',
+          display: 'flex',
+          justifyContent: 'flex-end',
         }}>
           <button
             onClick={onExploreMore}
@@ -1264,6 +1272,7 @@ function CampusHUD({ origin, destination, onExploreMore }) {
               boxShadow: '0 0 24px rgba(255,42,42,0.35)',
               cursor: 'pointer',
               transition: 'box-shadow 0.3s, transform 0.2s',
+              whiteSpace: 'nowrap',
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.boxShadow = '0 0 36px rgba(255,42,42,0.5)'
