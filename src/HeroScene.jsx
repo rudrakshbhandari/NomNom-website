@@ -1319,6 +1319,7 @@ function InjectKeyframes() {
 
 export default function HeroScene() {
   const [started, setStarted] = useState(false)
+  const [fading, setFading] = useState(false)
   const [origin, setOrigin] = useState(null)
   const [destination, setDestination] = useState(null)
   const [showStats, setShowStats] = useState(false)
@@ -1381,6 +1382,7 @@ export default function HeroScene() {
 
         {!started && (
           <div
+            onTransitionEnd={(e) => { if (fading && e.propertyName === 'opacity') setStarted(true) }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -1392,7 +1394,9 @@ export default function HeroScene() {
               gap: '2rem',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
-              pointerEvents: 'auto',
+              pointerEvents: fading ? 'none' : 'auto',
+              opacity: fading ? 0 : 1,
+              transition: 'opacity 0.8s ease-out',
             }}
           >
             <h2 style={{
@@ -1408,7 +1412,7 @@ export default function HeroScene() {
               The future of campus delivery.
             </h2>
             <button
-              onClick={() => setStarted(true)}
+              onClick={() => setFading(true)}
               style={{
                 fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
                 fontSize: '1.125rem',
