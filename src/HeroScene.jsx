@@ -1306,6 +1306,10 @@ function InjectKeyframes() {
         0%   { transform: translateX(-100%); }
         100% { transform: translateX(250%); }
       }
+      @keyframes tryDemoPulse {
+        0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 32px rgba(255,42,42,0.35), 0 0 1px rgba(255,255,255,0.15) inset; }
+        50%  { box-shadow: 0 8px 36px rgba(0,0,0,0.28), 0 0 44px rgba(255,42,42,0.45), 0 0 1px rgba(255,255,255,0.2) inset; }
+      }
       .hud-scan-line {
         animation: hudScan 2.4s ease-in-out infinite;
       }
@@ -1424,22 +1428,29 @@ export default function HeroScene() {
                 WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
                 border: '1px solid rgba(255,255,255,0.25)',
                 borderRadius: 14,
-                padding: '0.875rem 2rem',
+                padding: '0.875rem 1.75rem',
                 cursor: 'pointer',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 32px rgba(255,42,42,0.3), 0 0 1px rgba(255,255,255,0.15) inset',
                 textShadow: '0 0 12px rgba(255,45,45,0.9), 0 0 24px rgba(255,45,45,0.5)',
                 transition: 'box-shadow 0.3s, transform 0.2s',
+                animation: 'tryDemoPulse 2.5s ease-in-out infinite',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
               }}
               onMouseOver={(e) => {
+                e.currentTarget.style.animation = 'none'
                 e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.3), 0 0 48px rgba(255,42,42,0.4), 0 0 1px rgba(255,255,255,0.2) inset'
                 e.currentTarget.style.transform = 'scale(1.03)'
               }}
               onMouseOut={(e) => {
+                e.currentTarget.style.animation = 'tryDemoPulse 2.5s ease-in-out infinite'
                 e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.25), 0 0 32px rgba(255,42,42,0.3), 0 0 1px rgba(255,255,255,0.15) inset'
                 e.currentTarget.style.transform = 'scale(1)'
               }}
             >
-              Explore NomNom
+              Try Demo
+              <span style={{ opacity: 0.9, fontSize: '0.9em' }}>→</span>
             </button>
           </div>
         )}
