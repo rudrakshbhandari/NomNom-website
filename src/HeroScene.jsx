@@ -1386,74 +1386,57 @@ export default function HeroScene() {
               inset: 0,
               zIndex: 50,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              gap: '2rem',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
               pointerEvents: 'auto',
             }}
           >
-            <div
+            <h2 style={{
+              fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+              fontSize: 'clamp(2rem, 6vw, 3.5rem)',
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              color: '#fff',
+              margin: 0,
+              textAlign: 'center',
+              maxWidth: '90vw',
+            }}>
+              The future of campus delivery.
+            </h2>
+            <button
+              onClick={() => setStarted(true)}
               style={{
-                background: 'linear-gradient(165deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 50%, rgba(255,255,255,0.05) 100%)',
-                backdropFilter: 'blur(24px) saturate(1.2)',
-                WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 24,
-                padding: '2.5rem 3rem',
-                textAlign: 'center',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.1) inset',
+                fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                color: '#fff',
+                background: 'linear-gradient(165deg, rgba(255,42,42,0.35) 0%, rgba(255,42,42,0.2) 50%, rgba(255,42,42,0.28) 100%)',
+                backdropFilter: 'blur(20px) saturate(1.3)',
+                WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: 14,
+                padding: '0.875rem 2rem',
+                cursor: 'pointer',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 32px rgba(255,42,42,0.3), 0 0 1px rgba(255,255,255,0.15) inset',
+                textShadow: '0 0 12px rgba(255,45,45,0.9), 0 0 24px rgba(255,45,45,0.5)',
+                transition: 'box-shadow 0.3s, transform 0.2s',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.3), 0 0 48px rgba(255,42,42,0.4), 0 0 1px rgba(255,255,255,0.2) inset'
+                e.currentTarget.style.transform = 'scale(1.03)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.25), 0 0 32px rgba(255,42,42,0.3), 0 0 1px rgba(255,255,255,0.15) inset'
+                e.currentTarget.style.transform = 'scale(1)'
               }}
             >
-              <h2 style={{
-                fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
-                fontSize: '1.5rem',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                color: '#fff',
-                margin: 0,
-                marginBottom: '0.5rem',
-              }}>
-                See NomNom in action
-              </h2>
-              <p style={{
-                fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
-                fontSize: '0.9375rem',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.6)',
-                margin: 0,
-                marginBottom: '1.5rem',
-              }}>
-                Explore how campus delivery works.
-              </p>
-              <button
-                onClick={() => setStarted(true)}
-                style={{
-                  fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
-                  color: '#fff',
-                  background: ACCENT,
-                  border: 'none',
-                  borderRadius: 14,
-                  padding: '0.875rem 2rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 0 32px rgba(255,42,42,0.4)',
-                  transition: 'box-shadow 0.3s, transform 0.2s',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 48px rgba(255,42,42,0.5)'
-                  e.currentTarget.style.transform = 'scale(1.03)'
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 32px rgba(255,42,42,0.4)'
-                  e.currentTarget.style.transform = 'scale(1)'
-                }}
-              >
-                Try the demo
-              </button>
-            </div>
+              Explore NomNom
+            </button>
           </div>
         )}
       </div>
