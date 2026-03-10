@@ -2,8 +2,8 @@ import {
   useRef, useState, useEffect, useMemo, useCallback,
   Suspense, Component,
 } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Html } from '@react-three/drei'
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
+import { useGLTF, Html, Environment, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════════
@@ -45,6 +45,114 @@ class ModelErrorBoundary extends Component {
 function GeiselGLB() {
   const { scene } = useGLTF('/models/geisel.glb')
   return <primitive object={scene} />
+}
+
+export function IPhoneGLB({ imageUrl = '/nomnom-splash.png', modelUrl = '/models/iphone_14_pro.glb', ...props }) {
+  const { scene } = useGLTF(modelUrl)
+  const screenTex = useLoader(THREE.TextureLoader, imageUrl)
+  const model = useMemo(() => scene.clone(true), [scene])
+
+  useEffect(() => {
+    screenTex.colorSpace = THREE.SRGBColorSpace
+    screenTex.flipY = false
+    screenTex.wrapS = THREE.ClampToEdgeWrapping
+    screenTex.wrapT = THREE.ClampToEdgeWrapping
+
+    const imgW = screenTex.image?.width ?? 0
+    const imgH = screenTex.image?.height ?? 0
+    const imageAspect = imgW > 0 && imgH > 0 ? imgW / imgH : null
+
+    const screenMeshes = []
+    model.traverse((obj) => {
+      if (!obj?.isMesh) return
+      const mat = obj.material
+      if (!mat) return
+      const meshName = (obj.name || '').toLowerCase()
+      const matName = (mat.name || '').toLowerCase()
+      if (
+        meshName.includes('screen') || meshName.includes('display') || meshName.includes('lcd') || meshName.includes('panel')
+        || matName.includes('screen') || matName.includes('display') || matName.includes('lcd') || matName.includes('panel')
+      ) {
+        screenMeshes.push(obj)
+      }
+    })
+
+    screenMeshes.forEach((mesh) => {
+      const applyToMat = (m) => {
+        if (!m) return m
+        const nm = m.clone()
+        nm.map = screenTex
+        nm.emissive = new THREE.Color('#ffffff')
+        nm.emissiveMap = screenTex
+        nm.emissiveIntensity = 0.65
+        nm.needsUpdate = true
+        return nm
+      }
+
+      const nextMat = Array.isArray(mesh.material)
+        ? mesh.material.map(applyToMat)
+        : applyToMat(mesh.material)
+
+      mesh.material = nextMat
+
+      if (imageAspect && mesh.geometry) {
+        mesh.geometry.computeBoundingBox()
+        const bb = mesh.geometry.boundingBox
+        if (bb) {
+          const size = new THREE.Vector3()
+          bb.getSize(size)
+          const dims = [Math.abs(size.x), Math.abs(size.y), Math.abs(size.z)].sort((a, b) => b - a)
+          const screenAspect = dims[1] > 0 ? (dims[0] / dims[1]) : null
+          if (screenAspect) {
+            // Cover fit, centered crop (no stretch)
+            if (imageAspect > screenAspect) {
+              const rx = screenAspect / imageAspect
+              screenTex.repeat.set(rx, 1)
+              screenTex.offset.set((1 - rx) / 2, 0)
+            } else {
+              const ry = imageAspect / screenAspect
+              screenTex.repeat.set(1, ry)
+              screenTex.offset.set(0, (1 - ry) / 2)
+            }
+          }
+        }
+      }
+    })
+  }, [model, screenTex])
+
+  return <primitive object={model} {...props} />
+}
+
+export function InteractiveIPhone({ imageUrl = '/nomnom-splash.png' }) {
+  const group = useRef(null)
+  const target = useRef({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const onMove = (e) => {
+      const x = (e.clientX / window.innerWidth) * 2 - 1
+      const y = (e.clientY / window.innerHeight) * 2 - 1
+      target.current.x = x
+      target.current.y = y
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => window.removeEventListener('pointermove', onMove)
+  }, [])
+
+  useFrame((_, delta) => {
+    if (!group.current) return
+    const tx = target.current.x
+    const ty = target.current.y
+    const desiredY = 0.55 + tx * 0.35
+    const desiredX = 0.06 + (-ty) * 0.18
+    group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, desiredY, 8, delta)
+    group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, desiredX, 8, delta)
+  })
+
+  return (
+    <group ref={group}>
+      <IPhoneGLB imageUrl={imageUrl} position={[0, -0.75, 0]} rotation={[0.02, 0.55, 0]} scale={1.25} />
+    </group>
+  )
 }
 
 /* ═══════════════════════════════════════════════
@@ -1264,7 +1372,6 @@ function CampusHUD({ origin, destination, onExploreMore }) {
               letterSpacing: '0.02em',
               padding: '12px 24px',
               borderRadius: 14,
-              border: 'none',
               background: 'linear-gradient(165deg, rgba(255,42,42,0.55) 0%, rgba(255,42,42,0.28) 55%, rgba(255,42,42,0.40) 100%)',
               border: '1px solid rgba(255,255,255,0.18)',
               backdropFilter: 'blur(16px) saturate(1.25)',
