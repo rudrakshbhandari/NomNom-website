@@ -2,7 +2,7 @@ import {
   useRef, useState, useEffect, useMemo, useCallback,
   Suspense, Component,
 } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
 import { useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
 
@@ -45,6 +45,83 @@ class ModelErrorBoundary extends Component {
 function GeiselGLB() {
   const { scene } = useGLTF('/models/geisel.glb')
   return <primitive object={scene} />
+}
+
+export function IPhoneGLB({ imageUrl = '/nomnom-splash.png', modelUrl = '/models/iphone_14_pro.glb', ...props }) {
+  const { scene } = useGLTF(modelUrl)
+  const screenTex = useLoader(THREE.TextureLoader, imageUrl)
+
+  const model = useMemo(() => scene.clone(true), [scene])
+
+  useEffect(() => {
+    if (!screenTex) return
+
+    screenTex.colorSpace = THREE.SRGBColorSpace
+    screenTex.flipY = false
+    screenTex.wrapS = THREE.ClampToEdgeWrapping
+    screenTex.wrapT = THREE.ClampToEdgeWrapping
+    screenTex.repeat.set(1, 1)
+    screenTex.offset.set(0, 0)
+
+    const imgW = screenTex.image?.width ?? 0
+    const imgH = screenTex.image?.height ?? 0
+    const imageAspect = imgW > 0 && imgH > 0 ? imgW / imgH : null
+
+    const candidates = []
+    model.traverse((obj) => {
+      if (!obj?.isMesh) return
+      const mat = obj.material
+      if (!mat) return
+      const meshName = (obj.name || '').toLowerCase()
+      const matName = (mat.name || '').toLowerCase()
+      if (
+        meshName.includes('screen') || meshName.includes('display') || meshName.includes('lcd') || meshName.includes('panel')
+        || matName.includes('screen') || matName.includes('display') || matName.includes('lcd') || matName.includes('panel')
+      ) {
+        candidates.push(obj)
+      }
+    })
+
+    candidates.forEach((mesh) => {
+      const nextMat = Array.isArray(mesh.material)
+        ? mesh.material.map((m) => (m ? m.clone() : m))
+        : mesh.material.clone()
+
+      if (Array.isArray(nextMat)) {
+        nextMat.forEach((m) => { if (m) m.map = screenTex })
+      } else {
+        nextMat.map = screenTex
+      }
+      mesh.material = nextMat
+
+      if (imageAspect && mesh.geometry) {
+        mesh.geometry.computeBoundingBox()
+        const bb = mesh.geometry.boundingBox
+        if (bb) {
+          const size = new THREE.Vector3()
+          bb.getSize(size)
+          const dims = [Math.abs(size.x), Math.abs(size.y), Math.abs(size.z)].sort((a, b) => b - a)
+          const screenAspect = dims[1] > 0 ? (dims[0] / dims[1]) : null
+          if (screenAspect) {
+            // Cover fit (no stretching), centered crop
+            if (imageAspect > screenAspect) {
+              const rx = screenAspect / imageAspect
+              screenTex.repeat.set(rx, 1)
+              screenTex.offset.set((1 - rx) / 2, 0)
+            } else {
+              const ry = imageAspect / screenAspect
+              screenTex.repeat.set(1, ry)
+              screenTex.offset.set(0, (1 - ry) / 2)
+            }
+          }
+        }
+      }
+    })
+
+    screenTex.needsUpdate = true
+  }, [model, screenTex])
+
+  return <primitive object={model} {...props} />
 }
 
 /* ═══════════════════════════════════════════════
@@ -1264,7 +1341,6 @@ function CampusHUD({ origin, destination, onExploreMore }) {
               letterSpacing: '0.02em',
               padding: '12px 24px',
               borderRadius: 14,
-              border: 'none',
               background: 'linear-gradient(165deg, rgba(255,42,42,0.55) 0%, rgba(255,42,42,0.28) 55%, rgba(255,42,42,0.40) 100%)',
               border: '1px solid rgba(255,255,255,0.18)',
               backdropFilter: 'blur(16px) saturate(1.25)',
