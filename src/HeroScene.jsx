@@ -142,7 +142,7 @@ export function InteractiveIPhone({ imageUrl = '/nomnom-splash.png' }) {
     if (!group.current) return
     const tx = target.current.x
     const ty = target.current.y
-    const desiredY = (Math.PI + 0.55) + tx * 0.35
+    const desiredY = (-0.55) + tx * 0.35
     const desiredX = 0.06 + (-ty) * 0.18
     group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, desiredY, 8, delta)
     group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, desiredX, 8, delta)
@@ -150,7 +150,7 @@ export function InteractiveIPhone({ imageUrl = '/nomnom-splash.png' }) {
 
   return (
     <group ref={group}>
-      <IPhoneGLB imageUrl={imageUrl} position={[0, -1.15, 0]} rotation={[0.02, Math.PI + 0.55, 0]} scale={10} />
+      <IPhoneGLB imageUrl={imageUrl} position={[0, -1.15, 0]} rotation={[0.02, -0.55, 0]} scale={10} />
     </group>
   )
 }
