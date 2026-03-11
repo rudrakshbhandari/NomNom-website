@@ -221,7 +221,7 @@ export function InteractiveIPhone({ imageUrl = '/nomnom-splash.png' }) {
 
   return (
     <group ref={group}>
-      <ProceduralIPhone imageUrl={imageUrl} position={[0, -0.95, 0]} rotation={[0.02, -0.55, 0]} scale={2.9} />
+      <ProceduralIPhone imageUrl={imageUrl} position={[0, -0.75, 0]} rotation={[0.02, -0.55, 0]} scale={2.2} />
     </group>
   )
 }

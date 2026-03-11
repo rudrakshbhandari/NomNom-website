@@ -2,7 +2,7 @@ import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import HeroScene, { InteractiveIPhone } from './HeroScene'
 import { Canvas } from '@react-three/fiber'
-import { ContactShadows, Environment, Html } from '@react-three/drei'
+import { Environment, Html } from '@react-three/drei'
 
 const el = document.getElementById('hero-3d-root')
 if (el) {
@@ -19,9 +19,8 @@ function PhoneShowcaseScene() {
       dpr={[1, 2]}
       camera={{ position: [0, 0.2, 6.2], fov: 28, near: 0.1, far: 50 }}
       style={{ width: '100%', height: '100%' }}
-      gl={{ antialias: true }}
+      gl={{ antialias: true, alpha: true }}
     >
-      <color attach="background" args={['#000000']} />
       <ambientLight intensity={0.35} />
       <directionalLight position={[3.5, 4.2, 2.8]} intensity={1.25} />
       <directionalLight position={[-3.0, 2.5, -2.5]} intensity={0.75} />
@@ -35,14 +34,6 @@ function PhoneShowcaseScene() {
         )}
       >
         <InteractiveIPhone imageUrl="/nomnom-splash.png" />
-
-        <ContactShadows
-          position={[0, -1.25, 0]}
-          opacity={0.35}
-          scale={5.5}
-          blur={2.2}
-          far={3.5}
-        />
         <Environment preset="city" />
       </Suspense>
     </Canvas>
