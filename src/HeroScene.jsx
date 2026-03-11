@@ -150,7 +150,7 @@ export function InteractiveIPhone({ imageUrl = '/nomnom-splash.png' }) {
 
   return (
     <group ref={group}>
-      <IPhoneGLB imageUrl={imageUrl} position={[0, -0.75, 0]} rotation={[0.02, 0.55, 0]} scale={1.25} />
+      <IPhoneGLB imageUrl={imageUrl} position={[0, -1.15, 0]} rotation={[0.02, 0.55, 0]} scale={10} />
     </group>
   )
 }

@@ -16,7 +16,7 @@ function PhoneShowcaseScene() {
   return (
     <Canvas
       dpr={[1, 2]}
-      camera={{ position: [0, 0.55, 2.55], fov: 36, near: 0.1, far: 50 }}
+      camera={{ position: [0, 0.2, 6.2], fov: 28, near: 0.1, far: 50 }}
       style={{ width: '100%', height: '100%' }}
       gl={{ antialias: true }}
     >
