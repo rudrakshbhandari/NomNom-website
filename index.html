@@ -51,13 +51,13 @@
     <!-- Navigation -->
     <header class="header">
       <nav class="nav container">
-        <a href="/" class="logo">NomNom</a>
+        <a href="/" class="logo">
+          <img src="/logo.png" alt="NomNom" />
+        </a>
         <div class="nav-menu">
           <ul class="nav-links">
             <li><a href="#how-it-works">How it works</a></li>
             <li><a href="#features">Features</a></li>
-            <li><a href="#for-students">Order</a></li>
-            <li><a href="#for-riders">Ride</a></li>
           </ul>
           <a href="#download" class="cta-nav">Get the app</a>
         </div>
@@ -71,49 +71,17 @@
       </nav>
     </header>
 
-    <!-- Hero -->
-    <section class="hero">
-      <div class="hero-bg-pattern" aria-hidden="true"></div>
-      <div class="container hero-content">
-        <div class="hero-badge">UCSD students only — @ucsd.edu</div>
-        <h1 class="hero-title">
-          Triton2Go food,<br />
-          <span class="highlight">delivered to your dorm.</span>
-        </h1>
-        <p class="hero-subhead">
-          Order from campus dining via Triton2Go, then request delivery in
-          NomNom. Student riders bring it to you. Flat $2.5 fee. Real-time
-          tracking.
-        </p>
-        <div class="hero-ctas">
-          <a href="#download" class="btn btn-primary">Download for iOS</a>
-          <a href="#download" class="btn btn-secondary">Get on Android</a>
-        </div>
-      </div>
-      <div class="hero-visual">
-        <div class="phone-mockup">
-          <div class="phone-frame">
-            <div class="phone-screen">
-              <div class="mock-app">
-                <div class="mock-app-header"></div>
-                <div class="mock-app-content">
-                  <div class="mock-card"></div>
-                  <div class="mock-card short"></div>
-                  <div class="mock-card"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- Hero — interactive 3D scene -->
+    <section class="hero" id="hero-section">
+      <div id="hero-3d-root"></div>
     </section>
 
     <!-- How it works -->
     <section id="how-it-works" class="section section-how">
       <div class="container">
-        <h2 class="section-title">How it works</h2>
+        <h2 class="section-title">Three steps. That's it.</h2>
         <p class="section-subtitle">
-          Three simple steps from order to doorstep
+          Skip the walk. Your food is already on the way.
         </p>
         <div class="steps">
           <div class="step">
@@ -149,8 +117,7 @@
             </div>
             <h3>Order on Triton2Go</h3>
             <p>
-              Browse UCSD dining menus and place your order in the Triton2Go
-              app.
+              Browse menus. Place your order. Remember your 6 digit code then paste in NomNom
             </p>
           </div>
           <div class="step-connector"></div>
@@ -182,10 +149,9 @@
                 />
               </svg>
             </div>
-            <h3>Request delivery in NomNom</h3>
+            <h3>A student picks it up</h3>
             <p>
-              Open NomNom, add your Triton2Go pickup details, and request a
-              rider.
+              A nearby carrier grabs your food from the dining hall.
             </p>
           </div>
           <div class="step-connector"></div>
@@ -213,83 +179,67 @@
                 />
               </svg>
             </div>
-            <h3>Food delivered</h3>
+            <h3>Delivered to your door</h3>
             <p>
-              A student rider picks up your order and delivers it to your dorm.
-              Track in real time.
+              Hot and fresh, like it should be, right to your dorm
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features -->
-    <section id="features" class="section section-features">
+    <!-- Earn on your terms -->
+    <section id="features" class="section section-earn">
       <div class="container">
-        <h2 class="section-title">Built for campus life</h2>
-        <p class="section-subtitle">
-          Everything you need for hassle-free delivery
+        <h2 class="section-title earn-headline">Earn on your terms.</h2>
+        <p class="section-subtitle earn-subtitle">
+          Make more money than minimum wage simply from walking between classes
         </p>
-        <div class="features-grid">
-          <div class="feature-card">
-            <span class="feature-price">$2.5</span>
-            <h3>Flat delivery fee</h3>
-            <p>No surge pricing. No surprises. Same low fee every time.</p>
+
+        <div class="earn-cards">
+          <div class="earn-card earn-card-1">
+            <h3>Work when you want</h3>
+            <p>Before class, after class, anytime. No fixed shifts.</p>
           </div>
-          <div class="feature-card">
-            <span class="feature-icon">📍</span>
-            <h3>Real-time tracking</h3>
-            <p>Know exactly where your food is from pickup to dropoff.</p>
+          <div class="earn-card earn-card-2">
+            <h3>Short campus deliveries</h3>
+            <p>5–10 minutes per delivery. Stay close to where you need to be.</p>
           </div>
-          <div class="feature-card">
-            <span class="feature-icon">🏫</span>
-            <h3>UCSD-only</h3>
-            <p>Verified @ucsd.edu accounts. Students ordering from students.</p>
+          <div class="earn-card earn-card-3">
+            <h3>Earn more per hour</h3>
+            <p>Beat minimum wage. Base fee + distance + tips, paid per delivery.</p>
           </div>
-          <div class="feature-card">
-            <span class="feature-icon">🗺️</span>
-            <h3>Campus-wide</h3>
-            <p>All colleges and dorms. Every dining hall. Full coverage.</p>
+          <div class="earn-card earn-card-4">
+            <h3>Everything within UCSD</h3>
+            <p>No commuting off campus. Fast, convenient, and flexible.</p>
           </div>
+        </div>
+
+        <div class="earn-example earn-example-card">
+          <div class="earn-example-label">Example delivery</div>
+          <div class="earn-example-row">
+            <span class="earn-example-value" data-count="4">0</span>
+            <span class="earn-example-unit">min</span>
+          </div>
+          <p class="earn-example-desc">≈ $3–5 per delivery</p>
+          <p class="earn-example-sub">Between classes, on your schedule</p>
         </div>
       </div>
     </section>
 
-    <!-- Two audiences -->
-    <section class="section section-audiences">
+    <!-- Interactive iPhone showcase -->
+    <section class="section section-phone">
       <div class="container">
-        <div class="audience-cards">
-          <div id="for-students" class="audience-card audience-students">
-            <div class="audience-content">
-              <span class="audience-label">For students</span>
-              <h2>Order food, get it delivered</h2>
-              <p>
-                No more walking to dining halls in the rain or skipping lunch
-                between classes. Order via Triton2Go, request delivery in
-                NomNom, and enjoy.
-              </p>
-              <a href="#download" class="btn btn-primary">Download NomNom</a>
-            </div>
-            <div class="audience-visual">
-              <div class="illustration-placeholder illustration-order"></div>
-            </div>
+        <div class="phone-showcase">
+          <div class="phone-copy">
+            <div class="phone-kicker">Try it yourself</div>
+            <h2 class="section-title phone-title">NomNom, on your screen.</h2>
+            <p class="section-subtitle phone-subtitle">
+              Move your cursor — the phone reacts in real time.
+            </p>
           </div>
-          <div id="for-riders" class="audience-card audience-riders">
-            <div class="audience-content">
-              <span class="audience-label">For riders</span>
-              <h2>Earn $2 base + tips per delivery</h2>
-              <p>
-                Flexible gig on campus. Pick up orders from dining halls,
-                deliver to dorms by bike or e-scooter. Set your own schedule.
-                Get paid.
-              </p>
-              <a href="#download" class="btn btn-secondary-dark"
-                >Join as a rider</a
-              >
-            </div>
-            <div class="audience-visual">
-              <div class="illustration-placeholder illustration-ride"></div>
-            </div>
+          <div class="phone-stage">
+            <div id="phone-showcase-root" aria-label="Interactive iPhone demo"></div>
           </div>
         </div>
       </div>
@@ -298,9 +248,9 @@
     <!-- App store badges -->
     <section id="download" class="section section-download">
       <div class="container">
-        <h2 class="section-title">Get the app</h2>
+        <h2 class="section-title">Ready to order?</h2>
         <p class="section-subtitle">
-          Available on iOS and Android. @ucsd.edu required.
+          Download NomNom. UCSD students only.
         </p>
         <div class="store-badges">
           <a
@@ -339,7 +289,9 @@
       <div class="container">
         <div class="footer-content">
           <div class="footer-brand">
-            <a href="/" class="logo">NomNom</a>
+            <a href="/" class="logo">
+              <img src="/logo.png" alt="NomNom" />
+            </a>
             <p>UCSD's student-run food delivery</p>
           </div>
           <div class="footer-links">
@@ -365,6 +317,7 @@
       </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script type="module" src="/script.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

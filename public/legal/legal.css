@@ -1,0 +1,271 @@
+/* Legal pages — match main site Apple-style dark theme */
+:root {
+  --primary: #ff2a2a;
+  --primary-glow: rgba(255, 42, 42, 0.25);
+  --bg: #000000;
+  --bg-elevated: #0a0a0a;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --text: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.30);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --max: 860px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.65;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.25s;
+}
+
+a:hover {
+  color: var(--primary);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 0.6rem 0.9rem;
+  z-index: 999;
+  border: 1px solid var(--border);
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+.container {
+  width: min(var(--max), 100% - 2rem);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Header — glass/frosted Apple-style */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  min-height: 3.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logo {
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.logo img {
+  display: block;
+  height: 2rem;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+}
+
+.nav a:hover {
+  color: var(--text);
+}
+
+.nav a[aria-current="page"] {
+  color: var(--primary);
+}
+
+/* Hero / page title */
+.hero {
+  padding: 3rem 0 1.5rem;
+}
+
+.badge {
+  display: inline-block;
+  border: 1px solid rgba(255, 42, 42, 0.35);
+  background: rgba(255, 42, 42, 0.08);
+  color: var(--primary);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.meta {
+  color: var(--text-muted);
+  margin-top: 0.65rem;
+  font-size: 0.95rem;
+}
+
+/* Content card — subtle glass */
+.content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+h2 {
+  margin: 1.5rem 0 0.6rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+h2:first-of-type {
+  margin-top: 0;
+}
+
+h3 {
+  margin: 1.2rem 0 0.45rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+p, ul {
+  margin: 0.5rem 0 0.9rem;
+  color: var(--text-secondary);
+}
+
+ul {
+  padding-left: 1.25rem;
+}
+
+ul li {
+  margin-bottom: 0.35rem;
+}
+
+.content a {
+  color: var(--primary);
+}
+
+.content a:hover {
+  text-decoration: underline;
+}
+
+.policy-note {
+  border-left: 4px solid var(--primary);
+  padding: 0.75rem 1rem;
+  background: rgba(255, 42, 42, 0.06);
+  border-radius: 0 10px 10px 0;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+}
+
+/* Footer */
+.footer {
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+  padding: 2rem 0 2.5rem;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.footer-links a:hover {
+  color: var(--text);
+}
+
+.disclaimer {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    align-items: flex-start;
+    padding: 0.75rem 0;
+  }
+
+  .nav {
+    gap: 0.6rem;
+  }
+
+  .nav a {
+    font-size: 0.85rem;
+  }
+
+  .hero {
+    padding: 2rem 0 1rem;
+  }
+
+  .content {
+    padding: 1.25rem;
+  }
+}
