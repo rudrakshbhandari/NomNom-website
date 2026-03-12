@@ -6,27 +6,25 @@
   }
 
   const byId = (id) => document.getElementById(id);
+  const byRepeatedId = (id) => document.querySelectorAll(`[id="${id}"]`);
 
   const setText = (id, value) => {
-    const node = byId(id);
-    if (node) {
+    byRepeatedId(id).forEach((node) => {
       node.textContent = value;
-    }
+    });
   };
 
   setText("legal-version", config.legalVersion);
   setText("effective-date", config.effectiveDate);
   setText("company-name", config.company.legalName);
   setText("support-email", config.company.supportEmail);
-  setText("support-phone", config.company.supportPhone);
   setText("copyright-year", String(new Date().getFullYear()));
   setText("affiliation-disclaimer", config.affiliationDisclaimer);
 
-  const supportAnchor = byId("support-link");
-  if (supportAnchor) {
+  document.querySelectorAll('[id="support-link"]').forEach((supportAnchor) => {
     supportAnchor.href = config.company.supportUrl;
     supportAnchor.textContent = config.company.supportEmail;
-  }
+  });
 
   const footer = byId("legal-footer-links");
   if (footer) {
