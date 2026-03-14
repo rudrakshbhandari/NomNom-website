@@ -1,10 +1,11 @@
 import {
   useRef, useState, useEffect, useMemo, useCallback,
-  Suspense, Component,
+  Suspense,
 } from 'react'
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
-import { useGLTF, Html, Environment, ContactShadows } from '@react-three/drei'
+import { Html, Environment, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
+import { TextureLoader } from 'three'
 
 /* ═══════════════════════════════════════════════
    Constants
@@ -33,124 +34,255 @@ function easeOutCubic(t) {
 }
 
 /* ═══════════════════════════════════════════════
-   GLB loader with procedural fallback
+   Procedural iPhone (no GLB)
    ═══════════════════════════════════════════════ */
 
-class ModelErrorBoundary extends Component {
-  state = { error: false }
-  static getDerivedStateFromError() { return { error: true } }
-  render() { return this.state.error ? this.props.fallback : this.props.children }
+function roundedRectShape(w, h, r) {
+  const x = -w / 2
+  const y = -h / 2
+  const rr = Math.min(r, w / 2, h / 2)
+  const s = new THREE.Shape()
+  s.moveTo(x + rr, y)
+  s.lineTo(x + w - rr, y)
+  s.quadraticCurveTo(x + w, y, x + w, y + rr)
+  s.lineTo(x + w, y + h - rr)
+  s.quadraticCurveTo(x + w, y + h, x + w - rr, y + h)
+  s.lineTo(x + rr, y + h)
+  s.quadraticCurveTo(x, y + h, x, y + h - rr)
+  s.lineTo(x, y + rr)
+  s.quadraticCurveTo(x, y, x + rr, y)
+  return s
 }
 
-function GeiselGLB() {
-  const { scene } = useGLTF('/models/geisel.glb')
-  return <primitive object={scene} />
-}
+/* iPhone 16 (6.1") proportions: 147.6×71.6×7.8mm → W/H ≈ 0.486, D thin */
+const PHONE_W = 0.76
+const PHONE_H = 1.60
+const PHONE_D = 0.048
+const SCREEN_INSET = 0.92
+const CORNER_R = 0.12
 
-export function IPhoneGLB({ imageUrl = '/nomnom-splash.png', modelUrl = '/models/iphone_14_pro.glb', ...props }) {
-  const { scene } = useGLTF(modelUrl)
-  const screenTex = useLoader(THREE.TextureLoader, imageUrl)
-  const model = useMemo(() => scene.clone(true), [scene])
+function ProceduralIPhone({ imageUrl = '/nomnom-splash.png', ...props }) {
+  const splash = useLoader(TextureLoader, imageUrl)
+
+  const geo = useMemo(() => {
+    const W = PHONE_W
+    const H = PHONE_H
+    const D = PHONE_D
+    const R = CORNER_R
+
+    const body = new THREE.ExtrudeGeometry(roundedRectShape(W, H, R), {
+      depth: D,
+      bevelEnabled: true,
+      bevelThickness: 0.02,
+      bevelSize: 0.02,
+      bevelSegments: 6,
+      curveSegments: 16,
+      steps: 1,
+    })
+    body.center()
+
+    const glass = new THREE.ExtrudeGeometry(roundedRectShape(W * 0.97, H * 0.97, R * 0.88), {
+      depth: 0.016,
+      bevelEnabled: true,
+      bevelThickness: 0.008,
+      bevelSize: 0.008,
+      bevelSegments: 5,
+      curveSegments: 16,
+      steps: 1,
+    })
+    glass.center()
+
+    const maxW = W * SCREEN_INSET
+    const maxH = H * SCREEN_INSET
+    const imageAspect = 1170 / 2532
+    const screenAspect = maxW / maxH
+    let screenW, screenH
+    if (imageAspect >= screenAspect) {
+      screenW = maxW
+      screenH = maxW / imageAspect
+    } else {
+      screenH = maxH
+      screenW = maxH * imageAspect
+    }
+    const screen = new THREE.PlaneGeometry(screenW, screenH, 1, 1)
+
+    const pillW = 0.11
+    const pillH = 0.035
+    const pillGeo = new THREE.ShapeGeometry(roundedRectShape(pillW, pillH, pillH / 2))
+
+    const backPanel = new THREE.ShapeGeometry(roundedRectShape(W, H, R))
+
+    return { body, glass, screen, pillGeo, backPanel, screenH: maxH, W, H, D }
+  }, [])
 
   useEffect(() => {
-    screenTex.colorSpace = THREE.SRGBColorSpace
-    screenTex.flipY = false
-    screenTex.wrapS = THREE.ClampToEdgeWrapping
-    screenTex.wrapT = THREE.ClampToEdgeWrapping
+    splash.colorSpace = THREE.SRGBColorSpace
+    splash.wrapS = THREE.ClampToEdgeWrapping
+    splash.wrapT = THREE.ClampToEdgeWrapping
+  }, [splash])
 
-    const imgW = screenTex.image?.width ?? 0
-    const imgH = screenTex.image?.height ?? 0
-    const imageAspect = imgW > 0 && imgH > 0 ? imgW / imgH : null
+  const roundedCornerMask = useMemo(() => {
+    const size = 1024
+    const r = 96
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, size, size)
+    ctx.fillStyle = 'white'
+    ctx.beginPath()
+    ctx.moveTo(r, 0)
+    ctx.lineTo(size - r, 0)
+    ctx.quadraticCurveTo(size, 0, size, r)
+    ctx.lineTo(size, size - r)
+    ctx.quadraticCurveTo(size, size, size - r, size)
+    ctx.lineTo(r, size)
+    ctx.quadraticCurveTo(0, size, 0, size - r)
+    ctx.lineTo(0, r)
+    ctx.quadraticCurveTo(0, 0, r, 0)
+    ctx.fill()
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
+    return tex
+  }, [])
 
-    const screenMeshes = []
-    model.traverse((obj) => {
-      if (!obj?.isMesh) return
-      const mat = obj.material
-      if (!mat) return
-      const meshName = (obj.name || '').toLowerCase()
-      const matName = (mat.name || '').toLowerCase()
-      if (
-        meshName.includes('screen') || meshName.includes('display') || meshName.includes('lcd') || meshName.includes('panel')
-        || matName.includes('screen') || matName.includes('display') || matName.includes('lcd') || matName.includes('panel')
-      ) {
-        screenMeshes.push(obj)
-      }
+  const mats = useMemo(() => {
+    const body = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#0a0a0a'),
+      metalness: 1,
+      roughness: 0.06,
+      clearcoat: 1,
+      clearcoatRoughness: 0.02,
+      reflectivity: 1,
+      sheen: 0.04,
+      sheenRoughness: 0.15,
+      envMapIntensity: 1.2,
     })
-
-    screenMeshes.forEach((mesh) => {
-      const applyToMat = (m) => {
-        if (!m) return m
-        const nm = m.clone()
-        nm.map = screenTex
-        nm.emissive = new THREE.Color('#ffffff')
-        nm.emissiveMap = screenTex
-        nm.emissiveIntensity = 0.65
-        nm.needsUpdate = true
-        return nm
-      }
-
-      const nextMat = Array.isArray(mesh.material)
-        ? mesh.material.map(applyToMat)
-        : applyToMat(mesh.material)
-
-      mesh.material = nextMat
-
-      if (imageAspect && mesh.geometry) {
-        mesh.geometry.computeBoundingBox()
-        const bb = mesh.geometry.boundingBox
-        if (bb) {
-          const size = new THREE.Vector3()
-          bb.getSize(size)
-          const dims = [Math.abs(size.x), Math.abs(size.y), Math.abs(size.z)].sort((a, b) => b - a)
-          const screenAspect = dims[1] > 0 ? (dims[0] / dims[1]) : null
-          if (screenAspect) {
-            // Cover fit, centered crop (no stretch)
-            if (imageAspect > screenAspect) {
-              const rx = screenAspect / imageAspect
-              screenTex.repeat.set(rx, 1)
-              screenTex.offset.set((1 - rx) / 2, 0)
-            } else {
-              const ry = imageAspect / screenAspect
-              screenTex.repeat.set(1, ry)
-              screenTex.offset.set(0, (1 - ry) / 2)
-            }
-          }
-        }
-      }
+    const rim = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#0c0c0c'),
+      metalness: 1,
+      roughness: 0.05,
+      clearcoat: 1,
+      clearcoatRoughness: 0.02,
+      reflectivity: 1,
+      envMapIntensity: 1.3,
     })
-  }, [model, screenTex])
+    const glass = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#08080c'),
+      roughness: 0.02,
+      metalness: 0.02,
+      transmission: 0.4,
+      thickness: 0.3,
+      ior: 1.5,
+      clearcoat: 1,
+      clearcoatRoughness: 0.01,
+      reflectivity: 0.9,
+      envMapIntensity: 1.2,
+      transparent: true,
+      opacity: 0.78,
+    })
+    const backGlass = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#0a0a0f'),
+      roughness: 0.25,
+      metalness: 0.05,
+      transmission: 0.12,
+      thickness: 0.4,
+      ior: 1.45,
+      clearcoat: 1,
+      clearcoatRoughness: 0.15,
+      reflectivity: 0.6,
+      envMapIntensity: 1.1,
+      transparent: true,
+      opacity: 0.95,
+    })
+    return { body, rim, glass, backGlass }
+  }, [])
 
-  return <primitive object={model} {...props} />
+  return (
+    <group {...props}>
+      {/* Body */}
+      <mesh geometry={geo.body} material={mats.body} />
+
+      {/* Polished rim highlight */}
+      <mesh geometry={geo.body} material={mats.rim} scale={[1.003, 1.003, 1.002]} />
+
+      {/* Front glass */}
+      <mesh
+        geometry={geo.glass}
+        material={mats.glass}
+        position={[0, 0, geo.D / 2 + 0.01]}
+      />
+
+      {/* Dynamic Island */}
+      <mesh
+        geometry={geo.pillGeo}
+        position={[0, geo.screenH / 2 - 0.06, geo.D / 2 + 0.015]}
+      >
+        <meshBasicMaterial color="#0a0a0a" />
+      </mesh>
+
+      {/* Screen with splash — rounded corners via alpha mask (cut corners, no scaling) */}
+      <mesh
+        geometry={geo.screen}
+        position={[0, 0, geo.D / 2 + 0.028]}
+        renderOrder={999}
+      >
+        <meshBasicMaterial
+          map={splash}
+          alphaMap={roundedCornerMask}
+          transparent
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Back panel — frosted glass (iPhone 16 style) */}
+      <mesh
+        geometry={geo.backPanel}
+        material={mats.backGlass}
+        position={[0, 0, -geo.D / 2]}
+        rotation={[0, Math.PI, 0]}
+      />
+
+      {/* Camera bump — iPhone 16 vertical pill (main + ultra-wide) */}
+      <group position={[geo.W * 0.32, geo.H * 0.28, -(geo.D / 2 + 0.01)]}>
+        <mesh>
+          <boxGeometry args={[0.22, 0.35, 0.028]} />
+          <meshPhysicalMaterial color="#0a0a0a" metalness={0.7} roughness={0.18} clearcoat={1} clearcoatRoughness={0.04} />
+        </mesh>
+        <group position={[-0.055, 0.055, 0.018]}>
+          <mesh>
+            <circleGeometry args={[0.05, 28]} />
+            <meshPhysicalMaterial color="#080808" metalness={0.15} roughness={0.05} clearcoat={1} clearcoatRoughness={0.02} />
+          </mesh>
+        </group>
+        <group position={[-0.055, -0.055, 0.018]}>
+          <mesh>
+            <circleGeometry args={[0.045, 28]} />
+            <meshPhysicalMaterial color="#080808" metalness={0.15} roughness={0.05} clearcoat={1} clearcoatRoughness={0.02} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  )
 }
 
 export function InteractiveIPhone({ imageUrl = '/nomnom-splash.png' }) {
   const group = useRef(null)
-  const target = useRef({ x: 0, y: 0 })
 
-  useEffect(() => {
-    const onMove = (e) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1
-      const y = (e.clientY / window.innerHeight) * 2 - 1
-      target.current.x = x
-      target.current.y = y
-    }
-    window.addEventListener('pointermove', onMove, { passive: true })
-    return () => window.removeEventListener('pointermove', onMove)
-  }, [])
-
-  useFrame((_, delta) => {
+  useFrame(({ clock }) => {
     if (!group.current) return
-    const tx = target.current.x
-    const ty = target.current.y
-    const desiredY = (-0.55) + tx * 0.35
-    const desiredX = 0.06 + (-ty) * 0.18
-    group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, desiredY, 8, delta)
-    group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, desiredX, 8, delta)
+    const t = clock.elapsedTime
+    const s = Math.sin(t * 0.4)
+    const rightAmp = 60 * Math.PI / 180
+    const leftAmp = 30 * Math.PI / 180
+    group.current.rotation.y = -0.55 + (s > 0 ? s * rightAmp : s * leftAmp)
+    group.current.rotation.x = 0.02 + Math.sin(t * 0.4) * 0.04
   })
 
   return (
     <group ref={group}>
-      <IPhoneGLB imageUrl={imageUrl} position={[0, -1.15, 0]} rotation={[0.02, -0.55, 0]} scale={10} />
+      <ProceduralIPhone imageUrl={imageUrl} position={[0, -0.3, 0]} rotation={[0.02, -0.55, 0]} scale={2.0} />
     </group>
   )
 }
