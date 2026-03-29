@@ -27,7 +27,7 @@
   });
 
   const footer = byId("legal-footer-links");
-  if (footer) {
+  if (footer && footer.children.length === 0) {
     const links = [
       ["Home", config.links.home],
       ["Privacy", config.links.privacy],
